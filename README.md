@@ -1,4 +1,4 @@
-# Tutorial: Creating data plots for effective decision-making using statistical inference with R 
+# Tutorial: Take a plot and make it better
 
 Website: [https://dicook.github.io/tutorial_make_better_data_plots/](https://dicook.github.io/tutorial_make_better_data_plots/)
 
