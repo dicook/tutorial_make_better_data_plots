@@ -2,11 +2,28 @@
 
 Website: [https://dicook.github.io/tutorial_make_better_data_plots/](https://dicook.github.io/tutorial_make_better_data_plots/)
 
-This is for data analysts and statisticians who work regularly with data and want to improve their ability to make effective data visualisations. You will learn general principles that can get you off to a good start in making a data plot, and how to use these to layer up to a more effective communication. It will be hands-on, so we will code together and make the plots and improve them. There will be an opportunity to bring your own plot and data, and work together on making it better.
+This tutorial is for data analysts and statisticians who work regularly with data and want to improve their ability to make effective data visualisations. 
+You will learn general principles that can get you off to a good start in 
+making a data plot, and how to use these to layer up to a more effective 
+communication. It will be hands-on, so we will code together and make the 
+plots and improve them. There will be an opportunity to bring your own plot 
+and data, and work together on making it better. 
 
-**Presenter**: Dianne Cook is Professor of Business Analytics at Monash University in Melbourne, Australia.  She is a world leader in data visualisation, especially the visualisation of high-dimensional data using tours with low-dimensional projections, and projection pursuit.  She is currently focusing on bridging the gap between exploratory graphics and statistical inference.  Di is a Fellow of the American Statistical Association, past editor of the Journal of Computational and Graphical Statistics, current editor of the R Journal, elected Ordinary Member of the R Foundation, and elected member of the International Statistical Institute.
+**Presenter**: [Dianne Cook](https://www.dicook.org), a Professor of 
+Statistics at Monash University in Melbourne, Australia, is a global leader
+in data visualisation. She has delivered over 100 invited talks 
+internationally and published extensively on various aspects of data 
+visualisation. Dr. Cook is a Fellow of the American Statistical 
+Association, an elected member of the International Statistical 
+Institute, past editor of the Journal of Computational and Graphical 
+Statistics, and the R Journal. She has served as a Board Member of the 
+R Foundation and is currently the co-chair of the Statistical Computing 
+and Visualisation Section of the [Statistical Society of Australia](https://www.statsoc.org.au).
 
-**Background**: Participants should have a beginners knowledge of R, an awareness of tidy data, and ggplot2. Familiarity with the material in [R4DS](https://r4ds.hadley.nz) is helpful.
+**Background**: You should have a basic understanding of R, be familiar 
+with tidy data, and know how to use ggplot2. It's also helpful if you've 
+read the material in [R4DS](https://r4ds.hadley.nz) and taken a first-year 
+statistics course.
 
 ## Structure of tutorial
 
