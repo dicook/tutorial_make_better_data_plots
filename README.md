@@ -51,3 +51,7 @@ install.packages(c("ggplot2", "tidyr", "dplyr", "readr", "stringr", "nullabor", 
 GitHub repo with all materials is 
 [https://dicook.github.io/tutorial_make_better_data_plots/](https://dicook.github.io/tutorial_make_better_data_plots/).
 
+Resources: 
+
+- [Healy (2018) Data Visualization: A practical introduction](https://socviz.co)
+- [Wilke (2019) Fundamentals of Data Visualization](https://clauswilke.com/dataviz/)
