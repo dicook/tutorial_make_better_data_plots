@@ -12,21 +12,21 @@ This is for data analysts and statisticians who work regularly with data and wan
 
 | length (mins) :| topic |
 |------|-------|
-|5  |	Overview |
-|10 |	Tidy data |
-|20 |	Grammar of graphics |
-|15 | Guided exercises |
-|15 |	Cognitive principles |
-|15 | Guided exercises |
-|10 |	Identifying poor elements |
+|5  |	**Overview** |
+|10 |	**Tidy data** |
+|20 |	**Grammar of graphics** |
+|15 | *Guided exercises* |
+|15 |	**Cognitive principles** |
+|15 | *Guided exercises* |
+|10 |	**Identifying poor elements** |
 |30 |	BREAK|
-|15 |	Fixing the plot design |
-|10 | Guided exercises |
-|15 |	Styling and theming |
-|10 | Guided exercises |
-|10 | Is the pattern visible and real |
-|10 | Guided exercises |
-|20 |	Making your own plot better |
+|15 |	**Fixing the plot design** |
+|10 | *Guided exercises* |
+|15 |	**Styling and theming** |
+|10 | *Guided exercises* |
+|10 | **Is the pattern visible and real** |
+|10 | *Guided exercises* |
+|20 |	**Making your own plot better** |
 
 [Session 1 Slides (COMING)]()
 
