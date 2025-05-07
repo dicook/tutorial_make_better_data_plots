@@ -10,7 +10,7 @@ This is for data analysts and statisticians who work regularly with data and wan
 
 ## Structure of tutorial
 
-| length (mins) | topic |
+| length (mins) :| topic |
 |------|-------|
 |5  |	Overview |
 |10 |	Tidy data |
