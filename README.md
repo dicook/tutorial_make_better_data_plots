@@ -16,17 +16,17 @@ This is for data analysts and statisticians who work regularly with data and wan
 |10 |	**Tidy data** | Make the data do the work to more easily create a plot |
 |20 |	**Grammar of graphics** | Defining a plot succinctly and clearly |
 |15 | *Guided exercises* | |
-|15 |	**Cognitive principles** | |
+|15 |	**Cognitive principles** | Equipping your toolbox to work for many purposes | 
 |15 | *Guided exercises* | |
-|10 |	**Identifying poor elements** | |
+|10 |	**Identifying poor elements** | Develop skills in identifying what can be improved in a plot |
 |30 |	BREAK| |
-|15 |	**Fixing the plot design** | |
+|15 |	**Fixing the plot design** | Practicing improving a plot based on cognitive principles, tidy data and the grammar of graphics |
 |10 | *Guided exercises* | |
-|15 |	**Styling and theming** | |
+|15 |	**Styling and theming** | Common ways to polish a plot or ensemble of plots |
 |10 | *Guided exercises* | |
-|10 | **Is the pattern visible and real** | |
+|10 | **Is the pattern visible and real** | Check what you are trying to communicate, using statistical thinking |
 |10 | *Guided exercises* | |
-|20 |	**Making your own plot better** | |
+|20 |	**Making your own plot better** | Your turn to have a guided practice at improving a plot from your own work |
 
 [Session 1 Slides (COMING)]()
 
