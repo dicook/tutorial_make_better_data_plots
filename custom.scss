@@ -1,0 +1,45 @@
+/*-- scss:defaults --*/
+$body-font-size: 1.2rem !default;
+$headings-font-weight:  500 !default;
+$font-size-base: 1.2rem;
+
+/*-- scss:rules --*/
+h1, h2, h3, h4, h5, h6 {
+  text-shadow: -1px -1px 0 rgba(0, 0, 0, .3);
+}
+
+/*-- scss:rules --*/
+.textbox {
+  margin: 1em 0;
+  padding: 5px;
+  border: 1px solid black;
+  border-radius: 2px;
+}
+
+.center-align h2 {
+  text-align: center !important
+}
+
+li {
+  line-height: 1;
+}
+
+.f80 {
+  font-size: 80%;
+}
+
+.f80 p {
+  line-height: 1.3;
+}
+
+.f70 {
+  font-size: 70%;
+}
+
+.f60 {
+  font-size: 60%;
+}
+
+.f50 {
+  font-size: 50%;
+}

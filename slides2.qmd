@@ -1,0 +1,106 @@
+---
+title: "Tutorial: Take a data plot and make it better"
+author: "Dianne Cook <br> Monash University"
+format:
+  revealjs: 
+    theme: 
+      - default
+      - custom.scss
+    slide-number: c/t
+    chalkboard: true
+code-line-numbers: false
+message: false
+highlight-style: pygments
+footer: "[https://dicook.github.io/tutorial_make_better_data_plots/](https://dicook.github.io/tutorial_make_better_data_plots/)"
+---
+
+```{r, include = FALSE}
+#| label: libraries-for-participants
+library(tidyverse)
+library(colorspace)
+library(patchwork)
+library(broom)
+library(palmerpenguins)
+library(nullabor)
+library(dslabs) # For stars data
+library(vcd)
+library(MASS)
+library(colorspace)
+library(gstat)
+library(sf)
+library(sp)
+library(conflicted)
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::select)
+conflicts_prefer(dplyr::slice)
+conflicts_prefer(dplyr::rename)
+conflicts_prefer(dplyr::mutate)
+conflicts_prefer(dplyr::summarise)
+```
+
+```{r, include = FALSE}
+#| label: code-for-nice-slides
+library(DT)
+
+options(width = 200)
+knitr::opts_chunk$set(
+  fig.width = 3,
+  fig.height = 3,
+  fig.align = "center",
+  dev.args = list(bg = 'transparent'),
+  out.width = "100%",
+  fig.retina = 3,
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  cache = FALSE
+)
+theme_set(ggthemes::theme_gdocs(base_size = 12) +
+  theme(plot.background = 
+        element_rect(fill = 'transparent', colour = NA),
+        axis.line.x = element_line(color = "black", 
+                                   linetype = "solid"),
+        axis.line.y = element_line(color = "black", 
+                                   linetype = "solid"),
+        plot.title.position = "plot",
+        plot.title = element_text(size = 18),
+        panel.background  = 
+          element_rect(fill = 'transparent', colour = "black"),
+        legend.background = 
+          element_rect(fill = 'transparent', colour = NA),
+        legend.key        = 
+          element_rect(fill = 'transparent', colour = NA)
+  ) 
+)
+```
+
+```{r}
+#| echo: false
+#| eval: false
+# divergingx_hcl(palette="Zissou 1", n=10)
+# [1] "#3B99B1" "#40ABA5" "#6FB798" "#9FC095" "#C7C98A"
+# [6] "#EABE23" "#E8A419" "#E78802" "#EA6400" "#F5191C"
+# specplot(divergingx_hcl(palette="Zissou 1", n=10))
+```
+
+## Session 2: Making decisions and inferential statements based on data plots {.center .center-align}
+
+## Outline
+
+```{r}
+plan <- tribble(~time, ~topic,
+                "15", "Fixing the plot design",
+                "10", "Guided exercises", 
+                "15", "Styling and theming", 
+                "10", "Guided exercises",
+                "15", "Styling and theming", 
+                "10", "Guided exercises",
+                "20", "Making your plot better"
+                )
+knitr::kable(plan)
+```
+
+## End of session 2 {.center}
+
+<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+ 
