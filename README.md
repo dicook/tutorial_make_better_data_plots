@@ -1,4 +1,3 @@
-# Tutorial: Take a data plot and make it better
 
 <img src="images/website_image.png" align="center" width="600" />
 
