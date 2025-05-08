@@ -1,2 +1,2 @@
-remote_theme: "jekyll/minima@1e8a445"
+theme: jekyll-theme-slate
 title: [Take a data plot and make it better]
