@@ -1,5 +1,7 @@
 # Tutorial: Take a data plot and make it better
 
+<img src="images/website_image.png" align="center" width="500" />
+
 Website: [https://dicook.github.io/tutorial_make_better_data_plots/](https://dicook.github.io/tutorial_make_better_data_plots/)
 
 This tutorial is for data analysts and statisticians who work regularly with data and want to improve their ability to make effective data visualisations. 
