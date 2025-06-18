@@ -1,5 +1,8 @@
 ---
 title: "Tutorial: Take a data plot and make it better"
+title-slide-attributes:
+  data-background-color: "#006dae"
+  data-background-opacity: "0.5"
 author: "Dianne Cook <br> Monash University"
 format:
   revealjs: 
@@ -7,8 +10,14 @@ format:
       - default
       - custom.scss
     slide-number: c/t
-    chalkboard: true
+    chalkboard: false
+    width: 1600
+    height: 900
+    margin: 0.1
+    slide-tone: false
+    embed-resources: true
 code-line-numbers: false
+code-fold: true
 message: false
 highlight-style: pygments
 footer: "[https://dicook.github.io/tutorial_make_better_data_plots/](https://dicook.github.io/tutorial_make_better_data_plots/)"
@@ -16,19 +25,21 @@ footer: "[https://dicook.github.io/tutorial_make_better_data_plots/](https://dic
 
 ```{r, include = FALSE}
 #| label: libraries-for-participants
-library(tidyverse)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(readr)
+library(readxl)
+library(stringr)
+library(forcats)
 library(colorspace)
 library(patchwork)
 library(broom)
-library(palmerpenguins)
+library(ggbeeswarm)
+library(ggmosaic)
 library(nullabor)
-library(dslabs) # For stars data
-library(vcd)
-library(MASS)
-library(colorspace)
-library(gstat)
-library(sf)
-library(sp)
+library(gapminder)
+library(ggthemes)
 library(conflicted)
 conflicts_prefer(dplyr::filter)
 conflicts_prefer(dplyr::select)
@@ -83,7 +94,7 @@ theme_set(ggthemes::theme_gdocs(base_size = 12) +
 # specplot(divergingx_hcl(palette="Zissou 1", n=10))
 ```
 
-## Session 2: Making decisions and inferential statements based on data plots {.center .center-align}
+## Session 2: Practice, polish and significance {.center .center-align .transition-slide}
 
 ## Outline
 
@@ -95,10 +106,349 @@ plan <- tribble(~time, ~topic,
                 "10", "Guided exercises",
                 "15", "Styling and theming", 
                 "10", "Guided exercises",
-                "20", "Making your plot better"
+                "20", "Making YOUR plot better"
                 )
 knitr::kable(plan)
 ```
+
+## Fixing the plot design {.center .center-align .transition-slide}
+
+## Example 1
+
+```{r}
+#| eval: false
+#| echo: false
+# This code prepares a small subset of data
+library(learningtower)
+student_all <- load_student("all") # 3.5mill obs
+student_tv <- student_all |>
+  filter(country %in% c("CAN", "AUS", "IDN", "COL", "MEX", "NZL")) |>
+  select(year, country, math, television) |>
+  group_by(year, country, television) |>
+  summarise(math = mean(math, na.rm=TRUE)) |>
+  ungroup()
+save(student_tv, file="data/student_tv.rda")
+```
+
+:::: {.columns}
+::: {.column}
+
+What are the errors in this plot?
+
+```{r}
+#| label: student-tv
+#| echo: false
+#| fig-width: 6
+#| fig-height: 6
+load("data/student_tv.rda")
+student_tv |>
+  filter(year == 2022) |>
+  filter(!is.na(television)) |>
+  ggplot(aes(x=television, y=math, group=country)) +
+    geom_line() +
+    geom_point() +
+    facet_wrap(~country, ncol=3) +
+    ylab("average math") 
+```
+:::
+::: {.column}
+
+::: {.panel-tabset}
+
+## message
+
+Variables are:
+
+- Number of TVs in household
+- Average math score
+- Country
+
+We are examining the relationship between average math score and number of televisions in the household across 6 countries.
+
+## R
+
+```{r}
+#| label: student-tv
+#| eval: false
+```
+
+## errors
+
+Perceiving trend is distracted by 
+
+- different average values
+- ordering of countries 
+
+Reasonable aspects:
+
+- Aspect ratio for examining trend
+- Missing value category removed
+
+:::
+
+:::
+::::
+
+## Example 2
+
+:::: {.columns}
+::: {.column width=60%}
+
+```{r}
+#| fig-width: 8
+#| fig-height: 4
+#| out-width: 100%
+tb_aus_idn <- read_csv("data/TB_notifications_2023-08-21.csv") |>
+  filter(iso3 %in% c("AUS", "IDN", "KOR")) |> 
+  select(year, iso3, c_newinc) |>
+  pivot_wider(names_from = iso3, values_from = c_newinc) |>
+  mutate_at(vars(AUS:KOR), function(x) x/max(x, na.rm=TRUE)) |>
+  pivot_longer(AUS:KOR, names_to = "iso3", 
+    values_to = "rel_count")
+
+tb_aus_idn |>
+    ggplot(aes(x=year, y=rel_count, fill=iso3)) +
+      geom_col(position = "dodge") +
+  scale_fill_discrete_divergingx(palette = "Zissou 1") +
+  xlab("") + ylab("Relative count") +
+  theme(aspect.ratio = 0.5, 
+        legend.title = element_blank())
+```
+
+What are the problems with this plot?
+
+:::
+::: {.column width=40%}
+
+::: {.fragment}
+Variables are: `year`, `count`, `country`
+
+Mapping: `x=year`, `y=count`, `colour=country`
+
+Message?
+:::
+
+::: {.fragment}
+Compare change in TB incidence over time in different countries
+
+:::
+
+:::
+::::
+
+## Styling and theming {.center .center-align .transition-slide}
+
+## Styling
+
+:::: {.columns}
+::: {.column width=30%}
+
+The [BBC cookbook](https://bbc.github.io/rcookbook/) has good basic advice. The work of [Amanda Cox](https://gestalten.com/blogs/journal/visualizing-a-new-new-york-times) has been instrumental in the NY Times data visualisations.
+
+<br>
+Elements that are [important in plot design]{.darkpink2} are many.
+
+:::
+::: {.column width=5%}
+:::
+::: {.column width=65%}
+
+Remember:
+
+- The data should pop to be the pre-attentive element
+- Grids are important for lining up values with axis values 
+- Mapping of data should be appropriate 
+- Legends or callouts/annotations
+- Axis text: don't repeat yourself (e.g. "%" or "000, 000" at each tick mark)
+- Aspect ratio: square, short and wide, tall and skinny
+- Colour choices and application
+- Titles for journalism but captions for science
+- Small multiples
+- Scales allow for comparison
+- Layering order
+- Information is meaningful to the intended audience
+
+:::
+::::
+
+<!-- 
+## Example 1
+
+:::: {.columns}
+::: {.column width=20%}
+
+<br><br>
+How would you polish these plots?
+
+<br><br><br>
+```{r}
+#| code-fold: true
+#| code-summary: "Some answers"
+# 1: soften grid, resolve axis overlap
+# 2: put line over points
+# 3: remove repeats '000
+# 4: aspect ratio=1 to read association
+# 5: re-map variables
+```
+
+:::
+::: {.column width=80%}
+
+::: {.panel-tabset}
+
+## 1
+
+```{r}
+#| label: tb-data
+#| echo: false
+# Prep tb_tidy data again
+tb <- read_csv("data/TB_notifications_2023-08-21.csv") |>
+  filter(country == "Australia", year > 1996, year < 2013) |>
+  select(year, contains("new_sp")) 
+tb_tidy <- tb |>
+  select(-new_sp, -new_sp_m04, -new_sp_m514, 
+                  -new_sp_f04, -new_sp_f514) |> 
+  pivot_longer(starts_with("new_sp"), 
+    names_to = "sexage", 
+    values_to = "count") |>
+  mutate(sexage = str_remove(sexage, "new_sp_")) |>
+  separate_wider_position(
+    sexage,
+    widths = c(sex = 1, age = 4),
+    too_few = "align_start"
+  ) |>
+  filter(age != "u") |>
+  mutate(age = fct_recode(age, "0-14" = "014",
+                          "15-24" = "1524",
+                          "15-24" = "1524",
+                          "25-34" = "2534",
+                          "35-44" = "3544",
+                          "45-54" = "4554",
+                          "55-64" = "5564",
+                          "> 65" = "65"))
+```
+
+```{r}
+#| label: styling1
+#| fig-width: 7
+#| fig-height: 5
+#| out-width: 80%
+#| echo: false
+tb_tidy |> 
+  filter(!(age %in% c("0-14", "unknown"))) |>
+  ggplot(aes(x=year, 
+           y=count, 
+           colour=sex)) + 
+  geom_point() +
+  geom_smooth(se=F) +
+  facet_wrap(~age, ncol = 3) +
+  scale_color_discrete_divergingx(palette="Zissou 1") +
+  scale_x_continuous("year", 
+    breaks = seq(1998, 2012, 1)) +
+  theme(axis.text = element_text(size="10"),
+        panel.grid.major = element_line(color="black")) 
+```
+
+## 2
+
+```{r}
+#| label: styling2
+#| fig-width: 7
+#| fig-height: 5
+#| out-width: 80%
+#| echo: false
+tb_tidy |> 
+  filter(!(age %in% c("0-14", "unknown"))) |>
+  ggplot(aes(x=year, 
+           y=count, 
+           colour=sex)) + 
+  geom_smooth(se=F) +
+  geom_point() +
+  facet_wrap(~age, ncol = 3) +
+  scale_color_discrete_divergingx(palette="Zissou 1") +
+  scale_x_continuous("year", 
+    breaks = seq(1998, 2012, 2), 
+    labels = c("98", "00", "02", "04", "06", "08", "10", "12")) +
+  theme(axis.text = element_text(size="10",
+                    color="grey80"),
+        axis.title = element_text(size="10",
+                    color="grey80"),
+        panel.grid.major =   
+           element_line(color="white"),
+        panel.background =
+           element_rect(fill="grey90", 
+                        colour = "grey80")) 
+```
+
+## 3
+
+```{r}
+#| label: styling3
+#| fig-width: 7
+#| fig-height: 5
+#| out-width: 70%
+#| echo: false
+gapminder |> 
+  filter (year == 2007) |>
+  ggplot(aes(x=lifeExp, 
+             y=gdpPercap,
+             label=country,
+             colour=continent)) +
+  geom_point() +
+  scale_colour_discrete_divergingx(palette = "Zissou 1")
+```
+
+## 4
+
+```{r}
+#| label: styling4
+#| fig-width: 7
+#| fig-height: 5
+#| out-width: 80%
+#| echo: false
+gapminder |> 
+  filter (year == 2007) |>
+  ggplot(aes(x=lifeExp, 
+             y=gdpPercap,
+             label=country)) +
+  geom_point(colour = "#3B99B1") +
+  scale_y_log10("gdpPercap ('000)",
+                breaks = seq(0, 50000, 10000), 
+                labels = seq(0, 50, 10)) +
+  theme(aspect.ratio = 0.5)
+```
+
+## 5
+
+```{r}
+#| label: styling5
+#| fig-width: 7
+#| fig-height: 5
+#| out-width: 80%
+#| echo: false
+gapminder |> 
+  filter (year == 2007) |>
+  ggplot(aes(x=as.numeric(country),
+             y=gdpPercap,
+             fill=lifeExp)) +
+  geom_col() + xlab("country") +
+  scale_fill_distiller(palette = "RdPu", trans="log10") +    
+  scale_y_log10("gdpPercap ('000)",
+                breaks = seq(0, 50000, 10000), 
+                labels = seq(0, 50, 10)) +
+  theme(aspect.ratio = 0.5)
+```
+
+:::
+
+:::
+::::
+
+-->
+
+## Is the pattern visible and real {.center .center-align .transition-slide}
+
+## Making your own plot better {.center .center-align .transition-slide}
 
 ## End of session 2 {.center}
 

@@ -1,14 +1,24 @@
 ---
-title: "Tutorial: Take a data plot and make it better"
+title: "Tutorial <br> Take a data plot and make it better"
+title-slide-attributes:
+  data-background-color: "#006dae"
+  data-background-opacity: "0.5"
 author: "Dianne Cook <br> Monash University"
 format:
   revealjs: 
+    multiplex: false
     theme: 
       - default
       - custom.scss
     slide-number: c/t
-    chalkboard: true
+    chalkboard: false
+    width: 1600
+    height: 900
+    margin: 0.1
+    slide-tone: false
+    embed-resources: true
 code-line-numbers: false
+code-fold: true
 message: false
 highlight-style: pygments
 footer: "[https://dicook.github.io/tutorial_make_better_data_plots/](https://dicook.github.io/tutorial_make_better_data_plots/)"
@@ -16,16 +26,21 @@ footer: "[https://dicook.github.io/tutorial_make_better_data_plots/](https://dic
 
 ```{r, include = FALSE}
 #| label: libraries-for-participants
-library(tidyverse)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(readr)
+library(readxl)
+library(stringr)
+library(forcats)
 library(colorspace)
 library(patchwork)
 library(broom)
-library(palmerpenguins)
 library(ggbeeswarm)
-library(vcd)
+library(ggmosaic)
 library(nullabor)
-library(MASS)
-library(colorspace)
+library(gapminder)
+library(ggthemes)
 library(conflicted)
 conflicts_prefer(dplyr::filter)
 conflicts_prefer(dplyr::select)
@@ -47,20 +62,22 @@ knitr::opts_chunk$set(
   dev.args = list(bg = 'transparent'),
   out.width = "100%",
   fig.retina = 3,
-  echo = FALSE,
+  echo = TRUE,
   warning = FALSE,
   message = FALSE,
   cache = FALSE
 )
-theme_set(ggthemes::theme_gdocs(base_size = 12) +
+theme_set(ggthemes::theme_gdocs(base_size = 14) +
   theme(plot.background = 
         element_rect(fill = 'transparent', colour = NA),
         axis.line.x = element_line(color = "black", 
-                                   linetype = "solid"),
+                                   linewidth = 0.4),
         axis.line.y = element_line(color = "black", 
-                                   linetype = "solid"),
+                                   linewidth = 0.4),
+        panel.grid.major = element_line(color = "grey90"),
+        axis.ticks = element_line(color = "black"),
         plot.title.position = "plot",
-        plot.title = element_text(size = 18),
+        plot.title = element_text(size = 14),
         panel.background  = 
           element_rect(fill = 'transparent', colour = "black"),
         legend.background = 
@@ -80,22 +97,2129 @@ theme_set(ggthemes::theme_gdocs(base_size = 12) +
 # specplot(divergingx_hcl(palette="Zissou 1", n=10))
 ```
 
-## Session 1: Principles and tools {.center .center-align}
+## Welcome 👋🏼 
+
+:::: {.columns}
+::: {.column width="45%"}
+
+Thanks for joining to learn about making data plots today. 
+
+::: {style="font-size: 80%;"}
+<br>
+
+About the instructors:
+
+🦘 [Di](https://www.dicook.org) is a Professor of Statistics. She has more than 30 years of research and teaching of data visualisation, and open source software development.  <br>
+🐨 [Jayani](https://jayanilakshika.netlify.app) is a final year PhD student. She is working on methods to help decide on the best nonlinear low dimensional representation of high dimensional data, and is the author of several R packages. <br>
+🏛️ We are both in Econometrics and Business Statistics, at Monash University. <br>
+:::
+
+:::
+::: {.column width="5%"}
+
+:::
+::: {.column width="45%"}
+::: {.fragment}
+
+🧩 Feel free to ask questions any time. 🤔
+
+::: {style="font-size: 80%;"}
+<br>
+
+🎯 The objectives for today are:
+
+1. Build your knowledge of cognitive perception principles for good graphics
+2. Recognise elements of a current design that can be improved
+3. Develop coding skills to implement improved design
+
+```{r}
+#| code-summary: load these libraries to get started
+library(tidyverse)
+library(colorspace)
+library(patchwork)
+library(broom)
+library(palmerpenguins)
+library(ggbeeswarm)
+library(vcd)
+library(nullabor)
+library(MASS)
+library(colorspace)
+library(conflicted)
+conflicts_prefer(dplyr::filter)
+conflicts_prefer(dplyr::select)
+conflicts_prefer(dplyr::slice)
+conflicts_prefer(dplyr::rename)
+conflicts_prefer(dplyr::mutate)
+conflicts_prefer(dplyr::summarise)
+```
+
+:::
+
+:::
+:::
+::::
+
+## Session 1: Principles and tools {.center .center-align .transition-slide}
 
 ## Outline
 
 ```{r}
+#| echo: false
 plan <- tribble(~time, ~topic,
                 "5", "Outline",
                 "10", "Tidy data", 
-                "20", "Grammar of graphics",
+                "15", "Grammar of graphics",
                 "15", "Guided exercises", 
                 "15", "Cognitive principles",
                 "15", "Guided exercises", 
-                "10", "Identifying poor elements", 
+                "15", "Identifying poor elements", 
                 "30", "BREAK")
 knitr::kable(plan)
 ```
+
+## Tidy data {.center .center-align .transition-slide}
+
+## Tidy data [(1/5)]{.f70}
+
+:::: {.columns}
+::: {.column width=60%}
+<img src="https://cdn.myportfolio.com/45214904-6a61-4e23-98d6-b140f8654a40/6e297111-efb7-4555-93d2-085071d1853c_rw_1920.jpg?h=f1951b118eaddaaab8a572422bc16566" width="100%">
+
+[Illustrations from [Julia Lowndes and Allison Horst](https://allisonhorst.com/other-r-fun)]{.f60}
+
+:::
+::: {.column style="font-size: 80%; width: 40%;"}
+
+- Each variable is a column; each column is a variable.
+- Each observation is a row; each row is an observation.
+- Each value is a cell; each cell is a single value.
+- Each table contains one data set.
+
+
+- *Long form* makes it easier to reshape in many different ways
+- *Wider forms* are common for analysis
+
+Long form: **one** measured value per row. All other variables are descriptors (key variables)
+
+Widest form: **all** measured values for an entity are in a single row.
+
+:::
+::::
+
+## Tidy format [(2/5)]{.f70}
+
+This [WHO Tuberculosis Notifications](https://www.who.int/teams/global-tuberculosis-programme/data) is not in tidy format. The first step is to determine what the variables are. 
+
+::: {.f70}
+```{r}
+#| label: tb-data
+tb <- read_csv("data/TB_notifications_2023-08-21.csv") |>
+  filter(country == "Australia", year > 1996, year < 2013) |>
+  select(year, contains("new_sp")) 
+glimpse(tb)
+```
+:::
+
+::: {.panel-tabset .f80}
+
+## Variables are
+
+- year
+- sex 
+- age category
+
+
+## R code to read data
+
+```{r}
+#| label: tb-data
+#| eval: false
+#| class-source: code_block_short
+#| classes: code_block_short
+ 
+```
+
+:::
+
+## Tidy data [(3/5)]{.f70}
+
+:::: {.columns}
+::: {.column}
+Steps to wrangle to tidy form:
+
+1. [Select]{.darkpink2} only the variables containing sex and age counts
+2. [Pivot]{.darkpink2} into long form
+3. Extract [variables]{.darkpink2} from names (`agesex` column)
+4. [Tidy]{.darkpink2} age codes
+
+*Is `count` a variable?*
+
+:::
+
+::: {.column}
+
+```{r}
+#| label: tb-tidy
+#| echo: false
+tb_tidy <- tb |>
+  select(-new_sp, -new_sp_m04, -new_sp_m514, 
+                  -new_sp_f04, -new_sp_f514) |> 
+  pivot_longer(starts_with("new_sp"), 
+    names_to = "sexage", 
+    values_to = "count") |>
+  mutate(sexage = str_remove(sexage, "new_sp_")) |>
+  separate_wider_position(
+    sexage,
+    widths = c(sex = 1, age = 4),
+    too_few = "align_start"
+  ) |>
+  filter(age != "u") |>
+  mutate(age = fct_recode(age, "0-14" = "014",
+                          "15-24" = "1524",
+                          "15-24" = "1524",
+                          "25-34" = "2534",
+                          "35-44" = "3544",
+                          "45-54" = "4554",
+                          "55-64" = "5564",
+                          "> 65" = "65"))
+tb_tidy |> slice_head(n=12)
+```
+:::
+
+
+::::
+
+::: {.panel-tabset .f80}
+
+## R
+
+```{r}
+#| label: tb-tidy
+#| eval: false
+#| class-source: code_block_short
+#| classes: code_block_short
+  
+```
+
+:::
+
+## Why do it? [(4/5)]{.f70}
+
+:::: {.columns}
+::: {.column width=80%}
+![](https://cdn.myportfolio.com/45214904-6a61-4e23-98d6-b140f8654a40/209ee1eb-fd83-4e4c-9bed-82ae43b0f3e9_rw_3840.jpg?h=b00690a8a5eef3c901d6609cfefee987)
+
+[Illustrations from [Julia Lowndes and Allison Horst](https://allisonhorst.com/other-r-fun)]{.f60}
+:::
+::: {.column width=20%}
+**Tidy data** is the [starting point]{.bratgreen} for [statistical]{.darkpink2} analysis, and data [visualisation]{.darkpink2}. 
+
+<br>
+Read more from [tidy paper](https://www.jstatsoft.org/article/view/v059i10) and [wrangling paper](https://www.jstatsoft.org/article/view/v040i01). 
+
+:::
+:::
+
+## Tidy data = statistical data [(5/5)]{.f70}
+
+<br><br>
+
+\begin{align}
+X = \left[ \begin{array}{cccc}
+  x_{11} & x_{12} & \dots & x_{1p} \\
+  x_{21} & x_{22} & \dots & x_{2p} \\
+  \vdots & \vdots & \ddots & \vdots \\
+  x_{np} & x_{n2} & \dots & x_{np}
+
+\end{array}
+\right]
+\end{align}
+
+
+Variables $x_1, x_2, ..., x_p$ are in the columns. And we have $n$ observations. 
+
+<br>
+Graphics built on tidy data, fit nicely with your statistical analysis too.
+
+
+## Grammatical descriptions for plots {.transition-slide .center .center-align}
+
+## Grammar [(1/5)]{.f70}
+
+:::: {.columns}
+::: {.column}
+
+A grammar of graphics [maps]{.darkpink2} the variables from a tidy data set to elements of the plot. 
+
+It's like having the [DNA]{.darkpink2} rather than a [species name]{.darkpink2}, so you know how the plots are related to each other.
+
+Same script can be applied to different data.
+
+::: {.panel-tabset}
+
+## grammar
+
+```
+plot(data = <DATA>) + 
+  <GEOM_FUNCTION>(
+     mapping = aes(<MAPPINGS>),
+     stat = <STAT>, 
+     position = <POSITION>
+  ) +
+  <COORDINATE_FUNCTION> +
+  <FACET_FUNCTION> +
+  <SCALE> +
+  <THEME>
+```
+
+## R
+
+```{r}
+#| label: tb-plots
+#| echo: true
+#| eval: false
+#| class-source: code_block_med
+#| classes: code_block_med
+#| code-line-numbers: "5,6,9,10,11"
+#| code-fold: false
+tb_yr <- tb_tidy |>
+  group_by(year) |>
+  summarise(count = sum(count, na.rm=TRUE)) 
+gg1 <- ggplot(tb_yr, 
+  aes(x=year, y=count)) +
+  geom_col() +
+  ylim(c(0, 350))
+gg2 <- ggplot(tb_yr, 
+  aes(x=year, y=count)) +
+  geom_point() +
+  geom_smooth(se=F) +
+  ylim(c(0, 350))
+gg1 + gg2 + plot_layout(ncol=1)
+```
+
+## message
+
+These plots examine the relationship between TB incidence and time as years.
+
+:::
+
+:::
+::: {.column}
+
+```{r}
+#| label: tb-plots
+#| echo: false
+#| fig-width: 5
+#| fig-height: 9
+#| out-width: 50%
+```
+
+:::
+
+::::
+
+## Grammar and variables [(2/5)]{.f70}
+
+:::: {.columns}
+::: {.column}
+
+```{r}
+#| label: election
+#| echo: false
+#| out-width: 70%
+library(nullabor)
+data(electoral)
+polls <- electoral$polls
+ggplot(polls) +
+  geom_boxplot(aes(x=Democrat, 
+                   y=Margin)) +
+  xlab("democrat") + 
+  scale_y_continuous("margin (%)", 
+    breaks=seq(0, 100, 20),
+    limits=c(0,100)) +
+  theme(aspect.ratio = 1.2, 
+        panel.grid.major.x = element_blank())
+```
+
+::: {.panel-tabset .f80}
+
+## ?
+
+## variables
+
+- **Democrat**: true or false
+- **Margin** of the vote: 0-80
+
+## grammar
+
+```
+DATA: electoral
+MAPPING: x = Democrat, y = Margin
+GEOM: boxplot (calculates five number summary, and displays as boxplot)
+```
+
+## R
+
+```{r}
+#| label: election
+#| eval: false
+#| code-fold: false
+#| code-line-numbers: "5,6"
+```
+
+## message
+
+This plot compares the distribution of the margin in the vote percentage, between states with a democratic majority party and the rest, for the polling data. 
+
+:::
+
+:::
+::: {.column}
+
+::: {.fragment}
+<br>
+
+```{r}
+#| fig-width: 5
+#| fig-height: 3
+#| echo: false
+#| label: tb-age-trend
+tb_tidy |>
+  filter(age %in% c("45-54", "55-64"),
+         sex == "f") |>
+  ggplot() + 
+    geom_smooth(aes(x=year, 
+                  y=count,
+                  colour=age), 
+              se=F, 
+              method="lm") +
+    scale_color_discrete_divergingx(palette="Geyser") +
+    scale_x_continuous("year", 
+      breaks = seq(1998, 2012, 4), 
+      labels = c("98", "02", "06", "10")) +
+    theme(aspect.ratio = 0.8, 
+      axis.text = element_text(size="10"))
+```
+
+
+::: {.panel-tabset .f80}
+
+## ?
+
+## variables
+
+- **year**
+- **count** ?? yes, for plotting purposes, this is a variable
+- **age**
+
+## grammar
+
+```
+DATA: tb_tidy
+MAPPING: x = year, y = count, colour = age
+GEOM: lm (linear model)
+```
+
+## R
+
+```{r}
+#| label: tb-age-trend
+#| eval: false
+#| code-fold: false
+#| code-line-numbers: "5,6,7,9"
+#| class-source: code_block_short
+#| classes: code_block_short
+```
+
+## message
+
+This plot compares the linear trend in TB incidence between over time for 45-54 and 55-64 year olds.
+
+:::
+
+:::
+
+:::
+::::
+
+## Plot from grammar [(3/5)]{.f70}
+
+:::: {.columns}
+::: {.column}
+
+Here is the grammatical description
+
+```
+DATA: tb_tidy, 2012
+MAPPING: x=age, fill=sex
+STAT: count
+POSITION: stack
+GEOM: bar
+```
+
+::: {.panel-tabset .f80}
+
+## ?
+
+## plot
+
+```{r}
+#| fig-width: 5
+#| fig-height: 3
+#| label: tb-age-sex-count-2012
+#| echo: false
+#| out-width: 80%
+tb_tidy |>
+  filter(year == 2012) |>
+  ggplot() + 
+  geom_bar(aes(x=age, 
+               weight=count,
+               fill=sex),
+           alpha=0.8) +
+  scale_fill_discrete_divergingx(palette="Geyser") +
+  theme_bw() +
+  theme(aspect.ratio = 0.8, 
+    axis.text = element_text(size="10"))
+```
+
+## R
+
+```{r}
+#| label: tb-age-sex-count-2012
+#| eval: false
+#| code-line-numbers: "4,5,6"
+#| code-fold: false
+```
+
+See documentation: `geom_bar`, `after_stat(count)`
+
+## message
+
+This plot examines the relationship between TB incidence and age, and sex (although it's almost impossible from this arrangement to assess this last relationship).
+
+:::
+
+:::
+::: {.column}
+
+::: {.fragment}
+
+
+Here is the grammatical description
+
+```
+DATA: tb_tidy, 2012
+MAPPING: x=age, fill=sex
+STAT: proportion
+POSITION: fill
+GEOM: bar
+```
+
+::: {.panel-tabset .f80}
+
+## ?
+
+## plot
+
+```{r}
+#| label: tb-age-sex-prop-2012
+#| echo: false
+#| fig-width: 5
+#| fig-height: 3
+#| out-width: 80%
+tb_tidy |>
+  filter(year == 2012) |>
+  ggplot() + 
+  geom_bar(aes(x=age, 
+               weight=count,
+               fill=sex),
+           position="fill", alpha=0.8) +
+  scale_fill_discrete_divergingx(palette="Geyser") +
+  ylab("proportion") +
+  theme_bw() +
+  theme(aspect.ratio = 0.8, 
+    axis.text = element_text(size="10"))
+```
+
+## R
+
+```{r}
+#| label: tb-age-sex-prop-2012
+#| eval: false
+#| code-line-numbers: "4,5,6,7"
+#| code-fold: false
+```
+
+See documentation: `geom_bar`, `after_stat(prop)`
+
+## message
+
+This plot examines the relationship between TB incidence and age, and sex, focusing on the proportion of each sex within each age group.
+
+:::
+
+:::
+:::
+::::
+
+## Make the data do the work for your visualisation [(4/5)]{.f70}
+
+:::: {.columns}
+::: {.column}
+
+❌
+
+```{r}
+#| echo: false
+tb_bad <- tb_tidy |>
+  pivot_wider(names_from = "sex", values_from = "count")
+tb_bad |>
+  slice_head(n=10)
+```
+
+::: {.panel-tabset .f80}
+
+## ?
+
+## problem
+
+**Levels** of the variable sex have been **split** into different columns.  
+
+## R
+
+```{r}
+#| eval: false
+#| code-fold: false
+#| code-line-numbers: "3,4"
+tb_bad |> 
+  ggplot() + 
+    geom_point(aes(x=year, y=m), colour = "#A39000") +
+    geom_point(aes(x=year, y=f), colour = "#93B3FE")
+```
+
+:::
+
+:::
+::: {.column}
+
+::: {.fragment}
+
+✅
+
+```{r}
+#| echo: false
+tb_tidy |>
+  slice_head(n=10)
+```
+
+::: {.panel-tabset .f80}
+
+## ?
+
+## fix
+
+The variable **sex is mapped to colour**, and the plotting software handles the different levels. Can use palettes to appropriately handle colour mapping.
+
+## R
+
+```{r}
+#| eval: false
+#| code-fold: false
+#| code-line-numbers: "3,4,5"
+tb_tidy |> 
+  ggplot() + 
+    geom_point(aes(x=year, 
+                   y=count, 
+                   colour=sex))
+```
+
+
+:::
+
+:::
+
+:::
+::::
+
+## Guided exercises {.transition-slide .center .center-align}
+
+## Exercise 1
+
+:::: {.columns}
+::: {.column}
+
+Data on World Development Indicators (WDI) from [World Bank](https://databank.worldbank.org/source/world-development-indicators).
+
+<br>
+
+```{r}
+#| label: wdi
+#| echo: false
+wdi <- read_xlsx("data/P_Data_Extract_From_World_Development_Indicators.xlsx")
+glimpse(wdi, width=60)
+```
+
+:::
+::: {.column}
+- What are the variables?
+- What are the steps needed to wrangle it into tidy form?
+
+::: {.panel-tabset}
+
+## ?
+
+## variables
+
+- `country`: name and code
+- `indicator` 1 to $p$: name and code
+- `year`
+
+## wrangling
+
+::: {.f70}
+Pre-process, by creating a country dictionary table with unique `Country Name` and `Country Code` and an indicator dictionary table with unique `Series Name` and `Series Code`. Keep only the code columns in main data.
+:::
+
+1. Pivot year to long form: `country`, `year`, `indicator` and `value`
+2. Clean up year text
+3. Convert character to numeric, where needed
+
+::: {.f70}
+Could pivot to wide form with indicators in separate columns
+:::
+
+:::
+
+:::
+::::
+
+
+## Exercise 2
+
+:::: {.columns}
+
+::: {.column}
+
+Make a **plot to examine the relationship** between EG.CFT.ACCS.ZS ("Access to clean fuels and technologies for cooking (% of population)") by country over time. 
+
+```{r}
+#| label: wdi-tidy
+#| code-summary: tidying data
+wdi_country <- wdi |>
+  select(`Country Name`, `Country Code`) |>
+  distinct()
+wdi_indicator <- wdi |>
+  select(`Series Name`, `Series Code`) |>
+  distinct()
+wdi_tidy <- wdi |>
+  select(`Country Code`, `Series Code`, 
+    `2004 [YR2004]`:`2022 [YR2022]`) |>
+  pivot_longer(cols=`2004 [YR2004]`:`2022 [YR2022]`, 
+    names_to="year", values_to="value") |>
+  rename(country = `Country Code`,
+         indicator = `Series Code`) |>
+  mutate(value = as.numeric(value)) |>
+  mutate(year = str_sub(year, 1, 4)) |>
+  mutate(year = as.numeric(year))
+```
+
+::: {.panel-tabset}
+
+## ?
+
+## grammar
+
+```
+DATA: wdi_tidy, EG.CFT.ACCS.ZS
+MAPPING: x=year, y=value, group=country
+GEOM: line
+```
+
+## R
+
+```{r}
+#| label: wdi-access-to-clean-fuel
+#| code-fold: false
+#| eval: false
+#| code-line-numbers: "4,5,6"
+wdi_tidy |>
+  filter(indicator == "EG.CFT.ACCS.ZS") |>
+  ggplot() +
+    geom_line(aes(x=year, 
+                  y=value, 
+                  group=country),
+              alpha = 0.5) +
+    xlab("") + ylab("Access to clean fuel") +
+    theme_minimal()
+```
+
+:::
+
+:::
+
+::: {.column}
+
+::: {.fragment}
+
+```{r}
+#| label: wdi-access-to-clean-fuel
+#| echo: false
+#| fig-width: 4
+#| fig-height: 6
+#| out-width: 70%
+```
+
+:::
+
+:::
+::::
+
+
+## Exercise 3
+
+:::: {.columns}
+::: {.column}
+
+```{r}
+#| label: tb-age-sex-prop-2012
+#| echo: false
+#| fig-width: 5
+#| fig-height: 3
+#| out-width: 80%
+```
+
+We can read the proportion, but we have **lost the size of each category**. The way to fix this is to use a *mosaic plot*, which *maps the width of the columns to count*.
+
+:::
+::: {.column}
+
+::: {.fragment .f80}
+
+```{r}
+#| label: tb-age-sex-mosaic-2012
+#| eval: false
+#| code-fold: false
+#| code-line-numbers: "4,5,6"
+tb_tidy |>
+  filter(year == 2012) |>
+  ggplot() + 
+  geom_mosaic(aes(x=age, 
+                 weight=count,
+                 fill=sex)) +
+  scale_fill_discrete_divergingx(palette="Geyser") +
+  scale_y_continuous("proportion", breaks=seq(0,1,0.25)) +
+  theme_bw() +
+  theme(aspect.ratio = 0.6, 
+    axis.text = element_text(size="10"))
+```
+
+::: {.fragment}
+
+```{r}
+#| label: tb-age-sex-mosaic-2012
+#| echo: false
+#| fig-width: 5
+#| fig-height: 3
+#| out-width: 100%
+```
+
+:::
+
+:::
+:::
+::::
+
+## Cognitive perception principles {.transition-slide .center .center-align}
+
+## Hierarchy of mappings [(1/15)]{.f70}
+
+<br><br>
+
+<center>
+
+```{r}
+#| echo: false
+vis_spacing <- 'style="padding-left:20px;"'
+vis_spacing1 <- 'style="padding-left:10px;"'
+```
+
+<img src="images/task-position-common-scale-1.svg" width="250px"><img src="images/task-position-non-aligned-scale-1.svg" width="250px" `r vis_spacing1`><img src="images/task-length-1.svg"  width="250px" `r vis_spacing1`><img src="images/task-direction-1.svg"  width="250px" `r vis_spacing1`><img src="images/task-angle-1.svg"  width="250px" `r vis_spacing1`>
+
+<img src="images/task-area-1.svg"  width="250px"><img src="images/task-volume-1.svg"  width="250px" `r vis_spacing1`><img src="images/task-curvature-1.svg"  width="250px" `r vis_spacing1`><img src="images/task-texture-1.svg"  width="250px" `r vis_spacing1`><img src="images/task-shape-1.svg"  width="250px" `r vis_spacing1`>
+
+Cleveland and McGill (1984)
+
+::: {.f50}
+<br><br>Illustrations made by Emi Tanaka
+:::
+
+</center>
+
+## Hierarchy of mappings [(2/15)]{.f70}
+
+:::: {.columns}
+
+::: {.column width=50%}
+
+Based on the [accuracy]{.darkpink2} with which readers returned the numerical values. 
+
+1. Position - common scale ([BEST]{.bratgreen})
+2. Position - nonaligned scale
+3. Length, direction, angle
+4. Area
+5. Volume, curvature
+6. Shading, color ([WORST]{.darkpink2})
+
+:::
+
+::: {.column width=50% .fragment}
+
+Primary mapping used in common plots
+<br><br>
+
+1. scatterplot, barchart
+2. side-by-side boxplot, stacked barchart
+3. piechart, rose plot, gauge plot, donut, wind direction map, starplot
+4. treemap, bubble chart, mosaicplot
+5. chernoff face
+6. choropleth map
+
+:::
+
+::::
+
+## Proximity [(3/15)]{.f70}
+
+Place elements that you want to compare close to each other. If there are multiple comparisons to make, you need to decide which one is most important.
+
+:::: {.columns}
+
+::: {.column}
+
+```{r}
+#| label: proximity1
+#| fig-width: 7
+#| fig-height: 5
+#| echo: false
+tb_tidy |> 
+  filter(!(age %in% c("0-14", "unknown"))) |>
+  ggplot(aes(x=year, 
+           y=count, 
+           colour=sex)) + 
+  geom_point() +
+  geom_smooth(se=F) +
+  facet_wrap(~age, ncol = 3) +
+  scale_color_discrete_divergingx(palette="Zissou 1") +
+  scale_x_continuous("year", 
+    breaks = seq(1998, 2012, 2), 
+    labels = c("98", "00", "02", "04", "06", "08", "10", "12")) +
+  theme(axis.text = element_text(size="10")) +
+  ggtitle("Arrangement A")
+```
+:::
+
+::: {.column}
+
+```{r}
+#| label: proximity2
+#| fig-width: 7
+#| fig-height: 5
+#| echo: false
+tb_tidy |> 
+  filter(!(age %in% c("0-14", "unknown"))) |>
+  ggplot(aes(x = year, 
+             y = count, 
+             colour = age)) +
+  geom_point() +
+  geom_smooth(se=F) +
+  facet_wrap(~sex, ncol = 2) +
+  scale_color_discrete_divergingx(palette="Zissou 1") +
+  scale_x_continuous("year", 
+    breaks = seq(1998, 2012, 2), 
+    labels = c("98", "00", "02", "04", "06", "08", "10", "12")) +
+  theme(axis.text = element_text(size="10")) +
+  ggtitle("Arrangement B")
+```
+:::
+
+::::
+
+## Change blindness [(4/15)]{.f70}
+
+Making comparisons across plots requires the eye to jump from one focal point to another. It may result in not noticing differences. 
+
+:::: {.columns}
+
+::: {.column width=50%}
+
+```{r}
+#| label: cblind1
+#| fig-width: 5
+#| fig-height: 3.5
+#| echo: false
+tb_tidy |>
+  filter(age %in% c("45-54", "55-64"),
+         sex == "f") |>
+  ggplot(mapping=aes(x=year, 
+                 y=count)) + 
+  geom_point() +
+  geom_smooth(aes(colour=age), se=F, method="lm") +
+  facet_wrap(~age, ncol = 2) +
+  scale_color_discrete_divergingx(palette="Geyser") +
+  scale_x_continuous("year", 
+    breaks = seq(1998, 2012, 4), 
+    labels = c("98", "02", "06", "10")) +
+  theme(legend.position="none",
+        axis.text = element_text(size="10"))
+  
+```
+
+:::
+
+::: {.column width=50% .fragment .center}
+
+<br>
+```{r}
+#| label: cblind2
+#| fig-width: 3
+#| fig-height: 3
+#| out-width: 60%
+#| echo: false
+tb_tidy |>
+  filter(age %in% c("45-54", "55-64"),
+         sex == "f") |>
+  ggplot(mapping=aes(x=year, 
+                 y=count)) + 
+  geom_smooth(aes(colour=age), se=F, method="lm") +
+  scale_color_discrete_divergingx(palette="Geyser") +
+  scale_x_continuous("year", 
+    breaks = seq(1998, 2012, 4), 
+    labels = c("98", "02", "06", "10")) +
+  theme(legend.position="none",
+        axis.text = element_text(size="10"))
+  
+```
+
+:::
+::::
+
+## Change blindness [(5/15)]{.f70}
+
+:::: {.columns}
+::: {.column width=30%}
+
+<br>
+
+[Help the reader remember]{.darkpink2} what the pattern is in other panels by under-plotting all.
+
+:::
+::: {.column width=70%}
+
+::: {.panel-tabset}
+
+## 1
+
+```{r}
+#| label: olives-data
+#| include: false
+data(olives, package = "classifly")
+df2 <- olives |>
+  mutate(Region = factor(Region, labels = c("South", "Sardinia", "North")))
+```
+
+```{r}
+#| label: color-olives
+#| echo: false
+#| fig-width: 8
+#| fig-height: 5
+#| out-width: 80%
+ggplot(olives, aes(palmitoleic, palmitic, color = Area)) +
+  geom_point() +
+  scale_color_discrete_divergingx(palette="Zissou 1") 
+```
+
+Too many colours, too busy
+
+## 2
+
+```{r}
+#| label: no-shadow
+#| echo: false
+#| fig-width: 7
+#| fig-height: 7
+#| out-width: 60%
+ggplot(olives, aes(palmitoleic, palmitic, color = Area)) +
+  geom_point() +
+  facet_wrap(~Area) +
+  scale_color_discrete_divergingx(palette="Zissou 1") +
+  guides(color = FALSE) 
+```
+
+
+## 3
+
+```{r}
+#| label: shadow
+#| echo: false
+#| fig-width: 7
+#| fig-height: 7
+#| out-width: 60%
+ggplot(olives, aes(palmitoleic, palmitic)) +
+  geom_point(data = dplyr::select(olives, -Area), color = "gray80") +
+  geom_point(aes(color = Area), size=2) +
+  facet_wrap(~Area) +
+  scale_color_discrete_divergingx(palette="Zissou 1") +
+  guides(color = FALSE)
+```
+
+:::
+
+:::
+::::
+
+
+## Pre-attentive [(6/15)]{.f70}
+
+:::: {.columns}
+::: {.column}
+
+Can you find the odd one out?
+
+```{r}
+#| label: shape
+#| echo: false
+#| fig-width: 4
+#| fig-height: 4
+#| out-width: 80%
+set.seed(209)
+df <- data.frame(
+  x=runif(100), 
+  y=runif(100), 
+  cl=sample(c(rep("A", 1), rep("B", 99))))
+ggplot(data=df, aes(x, y, shape=cl)) + 
+  geom_point(size=3, alpha=0.8) +
+  theme(legend.position="None", aspect.ratio=1)
+```
+:::
+::: {.column}
+
+::: {.fragment}
+
+Is it easier now?
+
+```{r}
+#| label: colour
+#| echo: false
+#| fig-width: 4
+#| fig-height: 4
+#| out-width: 80%
+set.seed(454)
+df <- data.frame(
+  x=runif(100), 
+  y=runif(100), 
+  cl=sample(c(rep("A", 1), rep("B", 99))))
+ggplot(data=df, aes(x, y, colour=cl)) + 
+  geom_point(size=3, alpha=0.8) +
+  scale_color_discrete_divergingx(palette="Zissou 1") +
+  theme(legend.position="None", aspect.ratio=1)
+```
+
+
+:::
+
+:::
+::::
+
+## Colour palettes should match variable type [(7/15)]{.f70}
+
+:::: {.columns}
+::: {.column style="font-size: 80%; width: 40%;"}
+
+There are three basic choices of palettes:
+
+- qualitative
+- sequential
+- diverging
+- (rainbow)
+- (palindrome) SKIPPED
+
+Which one you [choose depends]{.darkpink2} on the 
+
+- [data values]{.darkpink2}
+- and what to [emphasize]{.darkpink2}
+
+Resources for exploring color:
+
+- [colorspace](https://colorspace.r-forge.r-project.org/articles/colorspace.html)
+- [ColorBrewer](https://colorbrewer2.org)
+
+:::
+::: {.column width=60%}
+
+```{r}
+#| echo: false
+#| fig-width: 6
+#| fig-height: 1
+V1 = tibble(x = 1:7, 
+            native = factor(c("quoll", "emu", "roo", 
+            "bilby", "quokka", "dingo", "numbat")))
+ggplot(V1, aes(x=x, y=1, fill=native)) +
+  geom_tile() +
+  geom_text(aes(x=x, y=1, label=native)) +
+  ggtitle("qualitative") + 
+  theme_minimal() +
+  theme(legend.position = "none", 
+        panel.background =
+                    element_rect(fill = 'transparent', colour = NA),
+        axis.text = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        #axis.line = element_line(colour = "white"),
+        panel.grid.major = element_line(colour = "white"),
+        panel.grid.minor = element_line(colour = "white"))
+```
+
+```{r}
+#| echo: false
+#| fig-width: 6
+#| fig-height: 1
+V2 = tibble(x = 1:7, 
+            fill = 1:7)
+ggplot(V2, aes(x=x, y=1, fill=fill)) +
+  geom_tile() +
+  geom_text(aes(x=x, y=1, label=fill)) +
+  ggtitle("sequential: emphasise high") + 
+  scale_fill_continuous_sequential(palette = "PinkYl") +
+  theme_minimal() +
+  theme(legend.position = "none", 
+        panel.background =
+                    element_rect(fill = 'transparent', colour = NA),
+        axis.text = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        #axis.line = element_line(colour = "white"),
+        panel.grid.major = element_line(colour = "white"),
+        panel.grid.minor = element_line(colour = "white"))
+```
+
+```{r}
+#| echo: false
+#| fig-width: 6
+#| fig-height: 1
+V3 = tibble(x = 1:7, 
+            fill = -3:3)
+ggplot(V3, aes(x=x, y=1, fill=fill)) +
+  geom_tile() +
+  geom_text(aes(x=x, y=1, label=fill)) +
+  ggtitle("diverging: emphasise high and low") + 
+  scale_fill_continuous_divergingx(palette = "ArmyRose") +
+  theme_minimal() +
+  theme(legend.position = "none", 
+        panel.background =
+                    element_rect(fill = 'transparent', colour = NA),
+        axis.text = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        #axis.line = element_line(colour = "white"),
+        panel.grid.major = element_line(colour = "white"),
+        panel.grid.minor = element_line(colour = "white"))
+```
+
+:::
+::::
+
+<!-- 
+## palindrome: for confidence intervals, symmetric values
+
+```{r}
+#| echo: false
+#| fig-width: 8
+#| fig-height: 5
+library(fable)
+library(tsibble)
+tourism_melb <- tourism |>
+  filter(Region == "Melbourne")
+fit <- tourism_melb |>
+  model(
+    ets = ETS(Trips ~ trend("A"))
+  )
+fc <- fit |>
+  forecast(h = "5 years")
+fc |>
+  filter(Purpose == "Business") |>
+  autoplot(tourism_melb) +
+  ggtitle("Melbourne Business Trips") +
+  theme(aspect.ratio = 0.5)
+```
+
+Example from the [fable package](https://fable.tidyverts.org/index.html). See unfinished palette work [here](https://github.com/njtierney/palap).
+
+-->
+
+## rainbow palettes [(8/15)]{.f70}
+
+:::: {.columns}
+
+::: {.column}
+
+❌  [Jet rainbow palette]{style="font-family: cursive;"}
+
+```{r}
+#| echo: false
+#| fig-width: 5.5
+#| fig-height: 5
+#| out-width: 70%
+library(vital)
+library(viridis)
+am <- aus_mortality |> 
+  filter(State == "Victoria", 
+         Sex != "total", 
+         Year < 1980, 
+         Age < 90) 
+
+ggplot(am, aes(x=Age, y=Mortality, colour=Year, group=Year)) + 
+    geom_line() +
+    facet_wrap(~Sex, ncol=1) +
+    scale_color_gradientn(colours = rainbow(10)) +
+    scale_y_log10() + 
+    theme(aspect.ratio = 0.5)
+```
+
+::: {style="font-size: 80%;"}
+Produces false detail, banding and color blindness ambiguity. 
+:::
+
+:::
+
+::: {.column}
+
+✅  [viridis palettes]{style="font-family: courier;"}
+
+```{r}
+#| echo: false
+#| fig-width: 5.5
+#| fig-height: 5
+#| out-width: 70%
+ggplot(am, aes(x=Age, y=Mortality, colour=Year, group=Year)) + 
+    geom_line() +
+    facet_wrap(~Sex, ncol=1) +
+    scale_colour_gradientn(colors = viridis_pal(option = "turbo")(10)) +
+    scale_y_log10() + 
+    theme(aspect.ratio = 0.5)
+```
+
+::: {style="font-size: 80%;"}
+Have a uniform scale, match grey scale ladder.  The turbo palette alleviates Jet rainbow palette problems.
+:::
+
+:::
+::::
+
+## rainbow palettes [(9/15)]{.f70}
+
+:::: {.columns}
+
+::: {.column}
+
+❌  [Jet rainbow palette]{style="font-family: cursive;"}
+
+```{r}
+#| echo: false
+#| fig-width: 5.5
+#| fig-height: 5
+#| out-width: 70%
+
+ggplot(am, aes(x=Age, y=Mortality, colour=Year, group=Year)) + 
+    geom_line() +
+    facet_wrap(~Sex, ncol=1) +
+    scale_color_gradientn(colours = deutan(rainbow(10))) +
+    scale_y_log10() + 
+    theme(aspect.ratio = 0.5)
+```
+
+::: {style="font-size: 80%;"}
+Produces false detail, banding and ambiguity. 
+:::
+
+:::
+
+::: {.column}
+
+✅  [viridis palettes]{style="font-family: courier;"}
+
+```{r}
+#| echo: false
+#| fig-width: 5.5
+#| fig-height: 5
+#| out-width: 70%
+ggplot(am, aes(x=Age, y=Mortality, colour=Year, group=Year)) + 
+    geom_line() +
+    facet_wrap(~Sex, ncol=1) +
+    scale_colour_gradientn(colors = deutan(viridis_pal(option = "turbo")(10))) +
+    scale_y_log10() + 
+    theme(aspect.ratio = 0.5)
+```
+
+::: {style="font-size: 80%;"}
+Colors still readable and following scale.
+:::
+
+:::
+::::
+
+## Transforming, e.g. colour scales [(10/15)]{.f70}
+
+:::: {.columns}
+::: {.column}
+
+If the variable mapped to colour has a right-skewed distribution, consider transforming it using a log or a square root. 
+
+
+```{r}
+#| echo: false
+#| fig-width: 8
+#| fig-height: 6
+#| out-width: 80%
+ggplot(as_tibble(Titanic), aes(x=interaction(Sex, Age),
+                               y=interaction(Class, Survived), 
+                               fill=n)) +
+  geom_tile() +
+  xlab("Sex, Age") +
+  ylab("Class, Survived") +
+  scale_fill_continuous_sequential(palette = "Terrain")
+```
+:::
+::: {.column}
+
+<br>
+This is the same data, where count has been transformed using square root.
+
+```{r}
+#| echo: false
+#| fig-width: 8
+#| fig-height: 6
+#| out-width: 80%
+ggplot(as_tibble(Titanic), aes(x=interaction(Sex, Age),
+                               y=interaction(Class, Survived), 
+                               fill=n)) +
+  geom_tile() +
+  xlab("Sex, Age") +
+  ylab("Class, Survived") +
+  scale_fill_continuous_sequential(palette = "Terrain", trans="sqrt")
+```
+
+:::
+::::
+
+## Order categorical variables by the statistic [(11/15)]{.f70}
+
+```{r}
+#| echo: false
+#| eval: false
+# remotes::install_github("kevinwang09/learningtower")
+library(learningtower)
+student_data_2018 <- load_student(2018)
+student_means <- student_data_2018 |>
+  group_by(country) |>
+  summarise(math = mean(math, na.rm=TRUE),
+            read = mean(read, na.rm=TRUE),
+            science = mean(science, na.rm=TRUE))
+save(student_data_2018,
+  file="data/student_data_2018.rda")
+save(student_means, file="data/student_means.rda")
+
+# Compute differences and bootstrap
+student2018_stats <- student_data_2018 %>%
+  group_by(country) %>%
+  summarise(mathgap=mean(math[gender=="male"],
+                           na.rm=TRUE)-
+                    mean(math[gender=="female"],
+                           na.rm=TRUE),
+            wmathgap=weighted.mean(
+                    math[gender=="male"],
+                      w=stu_wgt[gender=="male"],
+                        na.rm=T)-
+                     weighted.mean(
+                    math[gender=="female"],
+                      w=stu_wgt[gender=="female"], 
+                        na.rm=T),
+            readgap=mean(read[gender=="male"],
+                           na.rm=TRUE)-
+                    mean(read[gender=="female"],
+                           na.rm=TRUE),
+            wreadgap=weighted.mean(
+                    read[gender=="male"],
+                      w=stu_wgt[gender=="male"],
+                        na.rm=T)-
+                     weighted.mean(
+                    read[gender=="female"],
+                      w=stu_wgt[gender=="female"], 
+                        na.rm=T))
+save(student2018_stats, file="data/student2018_stats.rda")
+
+library(boot)
+cimathfn <- function(d, i) {
+  x <- d[i,]
+  if (nrow(x) == 0) {
+    ci <- 0
+  }
+  else {
+    ci <- weighted.mean(x$math[x$gender=="male"], 
+       w=x$stu_wgt[x$gender=="male"], na.rm=T)-
+     weighted.mean(x$math[x$gender=="female"],
+        w=x$stu_wgt[x$gender=="female"], na.rm=T)
+  }
+  ci
+}
+cireadfn <- function(d, i) {
+  x <- d[i,]
+  if (nrow(x) == 0) {
+    ci <- 0
+  }
+  else {
+    ci <- weighted.mean(x$read[x$gender=="male"], 
+       w=x$stu_wgt[x$gender=="male"], na.rm=T)-
+     weighted.mean(x$read[x$gender=="female"],
+        w=x$stu_wgt[x$gender=="female"], na.rm=T)
+  }
+  ci
+}
+bootmathfn <- function(d) {
+  if (nrow(d) == 0) {
+    ci <- c(0, 0)
+  }
+  else {
+    r <- boot(d, statistic=cimathfn, R=200)
+    l <- sort(r$t)[5]
+    u <- sort(r$t)[195]
+    ci <- c(l, u)
+  }
+  return(ci)
+}
+bootreadfn <- function(d) {
+  if (nrow(d) == 0) {
+    ci <- c(0, 0)
+  }
+  else {
+    r <- boot(d, statistic=cireadfn, R=200)
+    l <- sort(r$t)[5]
+    u <- sort(r$t)[195]
+    ci <- c(l, u)
+  }
+  return(ci)
+}
+math_results <- student_data_2018 %>%
+  split(.$country) %>% 
+  purrr::map(bootmathfn) 
+cnt <- names(math_results)
+math_results_tb <- tibble(country = rep(cnt, rep(2, length(cnt))), 
+            ci = rep(c("l", "u"), length(cnt)),
+            value=unlist(math_results)) 
+math_results_tb <- math_results_tb |>
+  pivot_wider(names_from = ci, values_from = value) |>
+  filter(!(l == 0 & u == 0))
+read_results <- student_data_2018 %>%
+  split(.$country) %>% 
+  purrr::map(bootreadfn) 
+cnt <- names(read_results)
+read_results_tb <- tibble(country = rep(cnt, rep(2, length(cnt))), 
+            ci = rep(c("l", "u"), length(cnt)),
+            value=unlist(read_results)) 
+read_results_tb <- read_results_tb |>
+  pivot_wider(names_from = ci, values_from = value) |>
+  filter(!(l == 0 & u == 0))
+save(math_results_tb,
+  file="data/math_results_tb.rda")
+save(read_results_tb,
+  file="data/read_results_tb.rda")
+```
+
+:::: {.columns}
+::: {.column width=33%}
+
+<center>
+❌  Default: alphabetical
+</center>
+
+```{r}
+#| echo: false
+#| fig-height: 6
+#| fig-width: 4
+#| out-width: 70%
+load("data/student_means.rda")
+student_means_sub <- student_means |>
+  filter(country %in% c("SGP", "KOR", "POL", "DEU", "NOR", "IRL", "GBR", "IDN", "AUS", "NZL", "USA", "TUR", "PHL", "MAR", "URY", "CHL", "COL", "CAN"))
+ggplot(student_means_sub, aes(x=country, y=math)) + 
+  geom_point(colour="#8ACE00", size=4) + 
+  coord_flip() +
+  xlab("") +
+  theme(aspect.ratio = 2)
+```
+
+:::
+::: {.column width=33%}
+
+::: {.fragment}
+
+<center>
+Full scale of number
+</center>
+
+```{r}
+#| echo: false
+#| fig-height: 6
+#| fig-width: 4
+#| out-width: 70%
+ggplot(student_means_sub, aes(x=country, y=math)) + 
+  geom_point(colour="#8ACE00", size=4) + 
+  coord_flip() +
+  xlab("") +
+  ylim(c(0, 1000)) +
+  theme(aspect.ratio = 2)
+```
+
+:::
+:::
+
+::: {.column width=33%}
+
+::: {.fragment}
+
+<center>
+✅  Order by statistic
+</center>
+
+```{r}
+#| echo: false
+#| fig-height: 6
+#| fig-width: 4
+#| out-width: 70%
+ggplot(student_means_sub, aes(x=fct_reorder(country, math), 
+                          y=math)) + 
+  geom_point(colour="#8ACE00", size=4) + 
+  coord_flip() +
+  xlab("") +
+  ylim(c(0, 1000)) +
+  theme(aspect.ratio = 2)
+```
+:::
+
+[Read more about [OECD PISA](https://www.oecd.org/en/about/programmes/pisa/pisa-data.html)]{.f80}
+
+
+:::
+
+::::
+
+<!--
+## Do the calculation for the reader
+
+:::: {.columns}
+::: {.column}
+
+**Famous example:** trade between England and the East Indies in the 18th century
+
+```{r}
+#| label: trade-data
+#| include: false
+#| echo: false
+data(EastIndiesTrade, package = "GDAdata")
+skimr::skim(EastIndiesTrade)
+```
+
+[Where is the biggest difference?]{.darkpink2}
+
+```{r}
+#| label: trade-plot1
+#| echo: false
+#| fig-height: 4
+#| fig-width: 6
+#| out-width: 80%
+ggplot(EastIndiesTrade, aes(Year, Exports)) +
+  geom_line(color = "#008A25", size = 2) +
+  geom_line(aes(Year, Imports), color = "#e6005c", size = 2) +
+  geom_ribbon(aes(ymin = Exports, ymax = Imports), fill = "gray") +
+  labs(y = "<span style='color:#008A25'>Export</span>/<span style='color:#e6005c'>Import</span>") +
+  theme(aspect.ratio=0.7, axis.title.y = ggtext::element_markdown())
+```
+
+
+
+:::
+::: {.column}
+
+::: {.fragment}
+
+<br> <br>
+
+<br>
+
+```{r}
+#| label: trade-plot2
+#| echo: false
+#| fig-height: 4
+#| fig-width: 6
+#| out-width: 80%
+ggplot(EastIndiesTrade, aes(Year, Imports - Exports)) +
+  geom_line(size = 2) +
+  theme(aspect.ratio=0.7)
+```
+
+
+
+:::
+
+:::
+
+::::
+
+::: {.fragment}
+<center>
+[Read more at the [History of Data Visualisation](https://friendly.github.io/HistDataVis/ch05-playfair.html).]{.f80}
+</center>
+:::
+-->
+
+## Do the calculation for the reader [(12/15)]{.f70}
+
+:::: {.columns}
+::: {.column}
+
+::: {.f70}
+
+```{r}
+#| fig-width: 10
+#| fig-height: 4
+#| code-fold: true
+#| label: anorexia-calculate
+data(anorexia, package="MASS")
+ggplot(data=anorexia, 
+ aes(x=Prewt, y=Postwt, 
+	colour=Treat)) + 
+ coord_equal() +
+ xlim(c(70, 110)) + ylim(c(70, 110)) +
+ xlab("Pre-treatment weight (lbs)") +  
+ ylab("Post-treatment weight (lbs)") +
+ geom_abline(intercept=0, slope=1,  
+   colour="grey80", linewidth=1.25) + 
+ geom_density2d() + 
+ geom_point(size=3) +
+ facet_grid(.~Treat) +
+ theme(legend.position = "none")
+```
+:::
+
+- Before and after treatment weight for anorexia patients 
+- Three different treatments
+- Need to **read the difference** relative to a 45$^o$ line
+
+:::
+
+::: {.column .fragment}
+
+::: {.f70}
+
+```{r}
+#| fig-width: 10
+#| fig-height: 4
+#| code-fold: true
+#| label: anorexia-reorganise
+ggplot(data=anorexia, 
+  aes(x=Prewt, colour=Treat,
+    y=(Postwt-Prewt)/Prewt*100)) + 
+  xlab("Pre-treatment weight (lbs)") +  
+  ylab("Percent increase in weight") +
+  geom_hline(yintercept=0, linewidth=1.25, 
+    colour="grey80") + 
+  geom_point(size=3) +   
+  facet_grid(.~Treat) +
+ theme(aspect.ratio=1, legend.position = "none")
+```
+
+:::
+
+- Compute the difference
+- Compare difference relative to before weight
+- Before weight is used as the baseline
+- *EASIER* to **read the difference** above and below a horizontal line 
+
+:::
+::::
+
+
+## Aspect ratio [(13/15)]{.f70}
+
+:::: {.columns}
+::: {.column width="30%"}
+
+❌  Wrong aspect ratio
+
+```{r}
+#| fig-width: 4
+#| fig-height: 7
+#| out-width: 100%
+#| echo: false
+#| label: anorexia-wrong-aspect-ratio
+ggplot(data=anorexia, 
+ aes(x=Prewt, y=Postwt, 
+	colour=Treat)) + 
+ xlim(c(70, 110)) + ylim(c(70, 110)) +
+ xlab("Pre-treatment weight (lbs)") +  
+ ylab("Post-treatment weight (lbs)") +
+ geom_abline(intercept=0, slope=1,  
+   colour="grey80", linewidth=1.25) + 
+ geom_density2d() + 
+ geom_point(size=3) +
+ facet_wrap(~Treat, ncol=1) +
+ theme(legend.position = "none",
+       aspect.ratio = 0.5) #exaggerated
+```
+
+:::
+::: {.column width="10%"}
+:::
+::: {.column width="60%"}
+
+<br>
+The **default** aspect ratio in most plots is **rectangular**. 
+
+<br><br>
+
+If you want to **compare two quantities**, including assessing correlation, the aspect ratio should be **square**. 
+
+<br><br>
+Two ways to achieve this with `ggplot2`:
+
+- `theme(aspect.ratio=1)` *PREFERRED*
+- `coord_equal()`
+
+:::
+
+::::
+
+## Aspect ratio [(14/15)]{.f70}
+
+
+:::: {.columns}
+
+::: {.column}
+
+```{r}
+#| label: aspect-ratio
+#| fig-width: 6
+#| fig-height: 8
+#| out-width: 80%
+#| echo: false
+tb_tidy |> 
+  filter(!(age %in% c("0-14", "unknown"))) |>
+  ggplot(aes(x=year, 
+           y=count, 
+           colour=sex)) + 
+  geom_point() +
+  geom_smooth(se=F) +
+  facet_wrap(~age, ncol = 1) +
+  scale_color_discrete_divergingx(palette="Zissou 1") +
+  scale_x_continuous("year", 
+    breaks = seq(1998, 2012, 2), 
+    labels = c("98", "00", "02", "04", "06", "08", "10", "12")) +
+  theme(axis.text = element_text(size="10")) +
+  ggtitle("Wrong aspect ratio")
+```
+:::
+
+::: {.column}
+
+Lines should be on average 45$^o$.
+
+- To read and compare trend 
+- To examine seasonality in time series
+
+::: {.fragment}
+
+```{r}
+#| label: proximity1
+#| fig-width: 7
+#| fig-height: 5
+#| echo: false
+```
+:::
+
+:::
+
+::::
+
+
+## Summary and more [(15/15)]{.f70}
+
+:::: {.columns}
+::: {.column}
+
+Items that are **primary elements** of a plot:
+
+- colour
+- trend line (?)
+
+**Organising** items:
+
+- place items to compare, close to each other
+- control the ordering, to make patterns easier to read
+- align axes for comparison across plots
+
+**Conventions**:
+
+- time on horizontal
+- connecting dots
+- text horizontal
+- audience: academic, report, journalism
+
+:::
+::: {.column}
+
+**Calculations**:
+
+- transformations to symmetry
+- do calculations for the reader
+- appropriate aspect ratio
+
+**Backgrounds**:
+
+- Axes and text should sit in the background to be examined only when needing to interpret
+- Data elements should be pre-attentive, first items seen
+
+**Don't repeat yourself**: no units on each tick mark (e.g. %)
+
+**Data pre-processing**: 
+
+- to create mapping of variables
+- beware missing information
+
+:::
+::::
+
+## Exercise 1
+
+:::: {.columns}
+::: {.column width=50%}
+![](images/IMG_5245.png)
+
+:::
+::: {.column width=50%}
+
+::: {.panel-tabset}
+
+## message
+
+Variables are:
+
+- party
+- vote count (but it's a summary statistic)
+
+Compare the counts for the party, or the proportion of votes obtained by the different parties
+
+## errors
+
+- mapping of count to angle is sub-optimal
+- party not ordered by vote
+- with so many groups, colour is not distinguishable, so one cannot match to legend
+
+:::
+:::
+::::
+
+
+## Exercise 2
+
+:::: {.columns}
+::: {.column}
+
+```{r}
+#| label: election
+#| echo: false
+#| out-width: 70%
+```
+
+<!-- ggbeeswarm, viewing density-->
+
+:::
+::: {.column}
+
+::: {.panel-tabset}
+
+## message
+
+Variables:
+
+- **Democrat**: true or false
+- **Margin** of the vote: 0-80
+
+This plot compares the distribution of the margin in the vote percentage, between states with a democratic majority party and the rest, for the polling data.
+
+## R
+
+```{r}
+#| label: election
+#| eval: false
+#| code-fold: false
+```
+
+## errors
+
+What is good:
+
+- numeric values mapped to position along a line
+- easy to compare medians, quartiles, and fences
+
+Things that might be fixed:
+
+- Only 5 numbers, plus outliers
+- Is the dot on the `FALSE` boxplot really an outlier?
+- Not sure how many observations are summarised by the 5 numbers
+
+:::
+:::
+
+::::
+
+## Exercise 3
+
+:::: {.columns}
+::: {.column width=70%}
+![](images/eltiempo.jpg){width=1000}
+
+[*Source*: El Tiempo, Bogota, 13 June 2025]{.f50}
+:::
+::: {.column width=30%}
+
+::: {.panel-tabset}
+
+## message
+
+*Just the top plot*
+
+Variables are:
+
+- year (2022-2025)
+- month (Jan-May)
+- Number of murders
+
+How are the number of murders changing over these years, also in relation to month?
+
+## errors
+
+Primary comparison is month, but it should be years. 
+
+Suffers from change blindness to be able to perceive yearly change. 
+
+:::
+:::
+::::
+
+
+## Exercise 4
+
+:::: {.columns}
+::: {.column width=70%}
+![](images/ETC5521-fig-outlier-mel-1.png)
+
+:::
+::: {.column width=30%}
+
+::: {.panel-tabset}
+
+## message
+
+Variables are:
+
+- pollutant
+- value
+
+Distribution of the values separately for each pollutant.
+
+## errors
+
+Pollutant is mapped to both x axis and to facet! 
+
+Wasted space more than anything else. Should be separate plots for each pollutant, focusing on the distribution of each.
+
+It is not change blindness because we are not trying to compare these distributions.
+
+:::
+:::
+:::
+
+## Exercise 5
+
+:::: {.columns}
+::: {.column width=70%}
+![](images/ETC5521-unnamed-chunk-9-1.png)
+
+:::
+::: {.column width=30%}
+
+::: {.panel-tabset}
+
+## message
+
+Variables are:
+
+- `pollutant`
+- `value`
+- `location`
+
+Compare the distribution of the values for each pollutant between locations.
+
+## errors
+
+Good things: 
+
+- `value` mapped to position along one axis
+- `location` mapped to x axis, so distributions can be compared
+
+Distributions are mostly skewed, so comparison can only be made on a few observations, not the bulk of observations. Need to transform most of the pollutant values, probably using a log scale.
+
+:::
+:::
+:::
+
+## Exercise 6
+
+:::: {.columns}
+::: {.column width=50%}
+![](images/educ2.png)
+
+:::
+::: {.column width=50%}
+
+::: {.panel-tabset}
+
+## message
+
+Variables are:
+
+- `year`
+- `rating`
+- `course`
+- number of students completing the rating
+
+Extra information: benchmark rating values (grey, green, red)
+
+Examine the student rating trend over time, and compare these across units. 
+
+## errors
+
+- Aspect ratio to perceive trend
+- Rating mapped to length of a bar, instead of point along an axis
+- Cannot compare units
+- Ordering of units, could go from highest overall ratings to lowest
+- Semester information is mapped to be primary comparison for some units
+- Number of students submitting ratings is mapped to text
+
+Also, number of students submitting ratings is not calibrated by number of students in the unit. 
+
+:::
+:::
+:::
+
 
 ## End of session 1 {.center}
 

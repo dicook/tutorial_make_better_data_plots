@@ -33,11 +33,11 @@ statistics course.
 |------:|:-------|:-------|
 |5  |	**Overview** | What we will cover |
 |10 |	**Tidy data** | Make the data do the work to more easily create a plot |
-|20 |	**Grammar of graphics** | Defining a plot succinctly and clearly |
+|15 |	**Grammar of graphics** | Defining a plot succinctly and clearly |
 |15 | *Guided exercises* | |
 |15 |	**Cognitive principles** | Equipping your toolbox to work for many purposes | 
 |15 | *Guided exercises* | |
-|10 |	**Identifying poor elements** | Develop skills in identifying what can be improved in a plot |
+|15 |	**Identifying poor elements** | Develop skills in identifying what can be improved in a plot |
 |30 |	BREAK| |
 |15 |	**Fixing the plot design** | Practicing improving a plot based on cognitive principles, tidy data and the grammar of graphics |
 |10 | *Guided exercises* | |
@@ -58,7 +58,23 @@ statistics course.
 1. (This is a head start, but final list available before tutorial) You should have a reasonably up to date version of R and R Studio, eg RStudio 2024.09.0 +375 and R version 4.5.0 (2025-04-11). Install the following packages, and their dependencies.
 
 ```
-install.packages(c("ggplot2", "tidyr", "dplyr", "readr", "stringr", "nullabor", "colorspace", "palmerpenguins", "broom", "ggbeeswarm", "vcd", "MASS", "conflicted"), dependencies=c("Depends", "Imports"))
+install.packages(c("ggplot2", 
+                   "tidyr", 
+                   "dplyr", 
+                   "readr", 
+                   "readxl",
+                   "stringr", 
+                   "forcats",
+                   "colorspace", 
+                   "patchwork",
+                   "broom", 
+                   "ggbeeswarm", 
+                   "ggmosaic",
+                   "nullabor", 
+                   "gapminder",
+                   "ggthemes",
+                   "conflicted"), 
+                   dependencies=c("Depends", "Imports"))
 ```
 
 2. Download the [Zip file of materials (COMING)]() to your laptop, and unzip it. 
