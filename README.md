@@ -41,11 +41,9 @@ statistics course.
 |30 |	BREAK| |
 |15 |	**Fixing the plot design** | Practicing improving a plot based on cognitive principles, tidy data and the grammar of graphics |
 |10 | *Guided exercises* | |
-|15 |	**Styling and theming** | Common ways to polish a plot or ensemble of plots |
-|10 | *Guided exercises* | |
-|10 | **Is the pattern visible and real** | Check what you are trying to communicate, using statistical thinking |
-|10 | *Guided exercises* | |
-|20 |	**Making your own plot better** | Your turn to have a guided practice at improving a plot from your own work |
+|20 |	**Styling and theming** | Common ways to polish a plot or ensemble of plots |
+|15 | **Is the pattern visible and real?** | Check what you are trying to communicate, using statistical thinking |
+|30 |	**Making your own plot better** | Your turn to have a guided practice at improving a plot from your own work |
 
 [Session 1 Slides (COMING)]()
 

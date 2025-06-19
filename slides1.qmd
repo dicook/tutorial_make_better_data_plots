@@ -51,9 +51,7 @@ conflicts_prefer(dplyr::summarise)
 ```
 
 ```{r, include = FALSE}
-#| label: code-for-nice-slides
-library(DT)
-
+#| label: options-for-nice-slides
 options(width = 200)
 knitr::opts_chunk$set(
   fig.width = 3,
@@ -67,6 +65,10 @@ knitr::opts_chunk$set(
   message = FALSE,
   cache = FALSE
 )
+```
+
+```{r, include = FALSE}
+#| label: theme-for-nice-plots
 theme_set(ggthemes::theme_gdocs(base_size = 14) +
   theme(plot.background = 
         element_rect(fill = 'transparent', colour = NA),
@@ -908,7 +910,7 @@ tb_tidy |>
                  fill=sex)) +
   scale_fill_discrete_divergingx(palette="Geyser") +
   scale_y_continuous("proportion", breaks=seq(0,1,0.25)) +
-  theme_bw() +
+  #theme_bw() +
   theme(aspect.ratio = 0.6, 
     axis.text = element_text(size="10"))
 ```
@@ -1009,7 +1011,7 @@ tb_tidy |>
   geom_point() +
   geom_smooth(se=F) +
   facet_wrap(~age, ncol = 3) +
-  scale_color_discrete_divergingx(palette="Zissou 1") +
+  scale_color_discrete_divergingx(palette="Geyser") +
   scale_x_continuous("year", 
     breaks = seq(1998, 2012, 2), 
     labels = c("98", "00", "02", "04", "06", "08", "10", "12")) +
@@ -1364,8 +1366,9 @@ Example from the [fable package](https://fable.tidyverts.org/index.html). See un
 
 ❌  [Jet rainbow palette]{style="font-family: cursive;"}
 
+::: {.f80}
+
 ```{r}
-#| echo: false
 #| fig-width: 5.5
 #| fig-height: 5
 #| out-width: 70%
@@ -1385,7 +1388,6 @@ ggplot(am, aes(x=Age, y=Mortality, colour=Year, group=Year)) +
     theme(aspect.ratio = 0.5)
 ```
 
-::: {style="font-size: 80%;"}
 Produces false detail, banding and color blindness ambiguity. 
 :::
 
@@ -1395,20 +1397,20 @@ Produces false detail, banding and color blindness ambiguity.
 
 ✅  [viridis palettes]{style="font-family: courier;"}
 
+::: {.f80}
+
 ```{r}
-#| echo: false
 #| fig-width: 5.5
 #| fig-height: 5
 #| out-width: 70%
 ggplot(am, aes(x=Age, y=Mortality, colour=Year, group=Year)) + 
     geom_line() +
     facet_wrap(~Sex, ncol=1) +
-    scale_colour_gradientn(colors = viridis_pal(option = "turbo")(10)) +
+    scale_colour_gradientn(colors = viridis_pal(option = "turbo")(10)[10:1]) +
     scale_y_log10() + 
     theme(aspect.ratio = 0.5)
 ```
 
-::: {style="font-size: 80%;"}
 Have a uniform scale, match grey scale ladder.  The turbo palette alleviates Jet rainbow palette problems.
 :::
 
@@ -1423,8 +1425,9 @@ Have a uniform scale, match grey scale ladder.  The turbo palette alleviates Jet
 
 ❌  [Jet rainbow palette]{style="font-family: cursive;"}
 
+::: {.f80}
+
 ```{r}
-#| echo: false
 #| fig-width: 5.5
 #| fig-height: 5
 #| out-width: 70%
@@ -1437,7 +1440,6 @@ ggplot(am, aes(x=Age, y=Mortality, colour=Year, group=Year)) +
     theme(aspect.ratio = 0.5)
 ```
 
-::: {style="font-size: 80%;"}
 Produces false detail, banding and ambiguity. 
 :::
 
@@ -1447,20 +1449,20 @@ Produces false detail, banding and ambiguity.
 
 ✅  [viridis palettes]{style="font-family: courier;"}
 
+::: {.f80}
+
 ```{r}
-#| echo: false
 #| fig-width: 5.5
 #| fig-height: 5
 #| out-width: 70%
 ggplot(am, aes(x=Age, y=Mortality, colour=Year, group=Year)) + 
     geom_line() +
     facet_wrap(~Sex, ncol=1) +
-    scale_colour_gradientn(colors = deutan(viridis_pal(option = "turbo")(10))) +
+    scale_colour_gradientn(colors = deutan(viridis_pal(option = "turbo")(10)[10:1])) +
     scale_y_log10() + 
     theme(aspect.ratio = 0.5)
 ```
 
-::: {style="font-size: 80%;"}
 Colors still readable and following scale.
 :::
 
@@ -1494,19 +1496,25 @@ ggplot(as_tibble(Titanic), aes(x=interaction(Sex, Age),
 <br>
 This is the same data, where count has been transformed using square root.
 
+::: {.f80}
+
 ```{r}
-#| echo: false
 #| fig-width: 8
 #| fig-height: 6
 #| out-width: 80%
-ggplot(as_tibble(Titanic), aes(x=interaction(Sex, Age),
-                               y=interaction(Class, Survived), 
-                               fill=n)) +
+#| code-line-numbers: "8,9,10"
+ggplot(as_tibble(Titanic), 
+       aes(x=interaction(Sex, Age),
+           y=interaction(Class, Survived), 
+           fill=n)) +
   geom_tile() +
   xlab("Sex, Age") +
   ylab("Class, Survived") +
-  scale_fill_continuous_sequential(palette = "Terrain", trans="sqrt")
+  scale_fill_continuous_sequential(
+    palette = "Terrain", 
+    trans="sqrt")
 ```
+:::
 
 :::
 ::::
@@ -1641,8 +1649,9 @@ save(read_results_tb,
 ❌  Default: alphabetical
 </center>
 
+::: {.f80}
+
 ```{r}
-#| echo: false
 #| fig-height: 6
 #| fig-width: 4
 #| out-width: 70%
@@ -1655,6 +1664,7 @@ ggplot(student_means_sub, aes(x=country, y=math)) +
   xlab("") +
   theme(aspect.ratio = 2)
 ```
+:::
 
 :::
 ::: {.column width=33%}
@@ -1665,8 +1675,9 @@ ggplot(student_means_sub, aes(x=country, y=math)) +
 Full scale of number
 </center>
 
+::: {.f80}
+
 ```{r}
-#| echo: false
 #| fig-height: 6
 #| fig-width: 4
 #| out-width: 70%
@@ -1677,6 +1688,7 @@ ggplot(student_means_sub, aes(x=country, y=math)) +
   ylim(c(0, 1000)) +
   theme(aspect.ratio = 2)
 ```
+:::
 
 :::
 :::
@@ -1689,19 +1701,23 @@ ggplot(student_means_sub, aes(x=country, y=math)) +
 ✅  Order by statistic
 </center>
 
+::: {.f80}
+
 ```{r}
-#| echo: false
 #| fig-height: 6
 #| fig-width: 4
 #| out-width: 70%
-ggplot(student_means_sub, aes(x=fct_reorder(country, math), 
-                          y=math)) + 
+#| code-line-numbers: "2,5"
+ggplot(student_means_sub, 
+       aes(x=fct_reorder(country, math), 
+           y=math)) + 
   geom_point(colour="#8ACE00", size=4) + 
   coord_flip() +
   xlab("") +
   ylim(c(0, 1000)) +
   theme(aspect.ratio = 2)
 ```
+:::
 :::
 
 [Read more about [OECD PISA](https://www.oecd.org/en/about/programmes/pisa/pisa-data.html)]{.f80}
@@ -1794,18 +1810,20 @@ ggplot(EastIndiesTrade, aes(Year, Imports - Exports)) +
 #| label: anorexia-calculate
 data(anorexia, package="MASS")
 ggplot(data=anorexia, 
- aes(x=Prewt, y=Postwt, 
-	colour=Treat)) + 
- coord_equal() +
- xlim(c(70, 110)) + ylim(c(70, 110)) +
- xlab("Pre-treatment weight (lbs)") +  
- ylab("Post-treatment weight (lbs)") +
- geom_abline(intercept=0, slope=1,  
-   colour="grey80", linewidth=1.25) + 
- geom_density2d() + 
- geom_point(size=3) +
- facet_grid(.~Treat) +
- theme(legend.position = "none")
+  aes(x=Prewt, 
+      y=Postwt, 
+	    colour=Treat)) + 
+  coord_equal() +
+  xlim(c(70, 110)) + 
+  ylim(c(70, 110)) +
+  xlab("Pre-treatment weight (lbs)") +  
+  ylab("Post-treatment weight (lbs)") +
+  geom_abline(intercept=0, slope=1,  
+    colour="grey80", linewidth=1.25) + 
+  geom_density2d() + 
+  geom_point(size=3) +
+  facet_grid(.~Treat) +
+  theme(legend.position = "none")
 ```
 :::
 
@@ -1824,6 +1842,7 @@ ggplot(data=anorexia,
 #| fig-height: 4
 #| code-fold: true
 #| label: anorexia-reorganise
+#| code-line-numbers: "3"
 ggplot(data=anorexia, 
   aes(x=Prewt, colour=Treat,
     y=(Postwt-Prewt)/Prewt*100)) + 
@@ -1833,7 +1852,7 @@ ggplot(data=anorexia,
     colour="grey80") + 
   geom_point(size=3) +   
   facet_grid(.~Treat) +
- theme(aspect.ratio=1, legend.position = "none")
+  theme(aspect.ratio=1, legend.position = "none")
 ```
 
 :::
@@ -2185,6 +2204,7 @@ Distributions are mostly skewed, so comparison can only be made on a few observa
 
 :::: {.columns}
 ::: {.column width=50%}
+
 ![](images/educ2.png)
 
 :::
@@ -2215,6 +2235,10 @@ Examine the student rating trend over time, and compare these across units.
 - Number of students submitting ratings is mapped to text
 
 Also, number of students submitting ratings is not calibrated by number of students in the unit. 
+
+## fix
+
+![](images/educ3.png){width=800}
 
 :::
 :::

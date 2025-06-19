@@ -50,9 +50,7 @@ conflicts_prefer(dplyr::summarise)
 ```
 
 ```{r, include = FALSE}
-#| label: code-for-nice-slides
-library(DT)
-
+#| label: options-for-nice-slides
 options(width = 200)
 knitr::opts_chunk$set(
   fig.width = 3,
@@ -61,20 +59,26 @@ knitr::opts_chunk$set(
   dev.args = list(bg = 'transparent'),
   out.width = "100%",
   fig.retina = 3,
-  echo = FALSE,
+  echo = TRUE,
   warning = FALSE,
   message = FALSE,
   cache = FALSE
 )
-theme_set(ggthemes::theme_gdocs(base_size = 12) +
+```
+
+```{r, include = FALSE}
+#| label: theme-for-nice-plots
+theme_set(ggthemes::theme_gdocs(base_size = 14) +
   theme(plot.background = 
         element_rect(fill = 'transparent', colour = NA),
         axis.line.x = element_line(color = "black", 
-                                   linetype = "solid"),
+                                   linewidth = 0.4),
         axis.line.y = element_line(color = "black", 
-                                   linetype = "solid"),
+                                   linewidth = 0.4),
+        panel.grid.major = element_line(color = "grey90"),
+        axis.ticks = element_line(color = "black"),
         plot.title.position = "plot",
-        plot.title = element_text(size = 18),
+        plot.title = element_text(size = 14),
         panel.background  = 
           element_rect(fill = 'transparent', colour = "black"),
         legend.background = 
@@ -99,14 +103,13 @@ theme_set(ggthemes::theme_gdocs(base_size = 12) +
 ## Outline
 
 ```{r}
+#| echo: false
 plan <- tribble(~time, ~topic,
                 "15", "Fixing the plot design",
                 "10", "Guided exercises", 
-                "15", "Styling and theming", 
-                "10", "Guided exercises",
-                "15", "Styling and theming", 
-                "10", "Guided exercises",
-                "20", "Making YOUR plot better"
+                "20", "Styling and theming", 
+                "15", "Is the pattern visible and real?", 
+                "30", "Making YOUR plot better"
                 )
 knitr::kable(plan)
 ```
@@ -126,7 +129,8 @@ student_tv <- student_all |>
   select(year, country, math, television) |>
   group_by(year, country, television) |>
   summarise(math = mean(math, na.rm=TRUE)) |>
-  ungroup()
+  ungroup() |>
+  mutate(country = factor(country))
 save(student_tv, file="data/student_tv.rda")
 ```
 
@@ -184,6 +188,57 @@ Reasonable aspects:
 - Aspect ratio for examining trend
 - Missing value category removed
 
+## fix 1
+
+::: {.f80}
+
+```{r}
+#| fig-width: 6
+#| fig-height: 5
+#| code-line-numbers: "10"
+s_tv_2012 <- student_tv |>
+  filter(year == 2022) |>
+  filter(!is.na(television)) 
+ggplot(s_tv_2012, 
+      aes(x=television, 
+          y=math, 
+          group=country)) +
+    geom_line() +
+    geom_point() +
+    facet_wrap(~country, ncol=3, scale="free") +
+    ylab("average math") 
+```
+:::
+
+## fix 2
+
+::: {.f80}
+
+```{r}
+#| fig-width: 6
+#| fig-height: 5
+#| code-line-numbers: "8,910"
+slope <- function(y, x) {
+  coef(lsfit(x, y))[2]
+}
+s_tv_trend <- s_tv_2012 |>
+  mutate(tv_num = as.numeric(television)) |>
+  group_by(country) |>
+  summarise(s = slope(tv_num, math))
+s_tv_2012 <- s_tv_2012 |>
+  mutate(country = factor(country, 
+    levels = s_tv_trend$country[order(s_tv_trend$s)]))
+ggplot(s_tv_2012, 
+      aes(x=television, 
+          y=math, 
+          group=country)) +
+    geom_line() +
+    geom_point() +
+    facet_wrap(~country, ncol=3, scale="free") +
+    ylab("average math") 
+```
+:::
+
 :::
 
 :::
@@ -193,6 +248,8 @@ Reasonable aspects:
 
 :::: {.columns}
 ::: {.column width=60%}
+
+::: {.f70}
 
 ```{r}
 #| fig-width: 8
@@ -214,71 +271,66 @@ tb_aus_idn |>
   theme(aspect.ratio = 0.5, 
         legend.title = element_blank())
 ```
-
-What are the problems with this plot?
+:::
 
 :::
 ::: {.column width=40%}
 
-::: {.fragment}
+::: {.panel-tabset}
+
+## message
+
 Variables are: `year`, `count`, `country`
 
 Mapping: `x=year`, `y=count`, `colour=country`
 
-Message?
-:::
+Geom: bar
 
-::: {.fragment}
+Message: 
 Compare change in TB incidence over time in different countries
 
+## errors
+
+- mapping of count is to a length
+- proximity suggests compare country in year
+
+
+## fix
+
+- map count to position along an axis
+- arrange countries, and use geoms, to make trend the primary element
+
+## R
+
+::: {.f70}
+
+```{r}
+#| fig-width: 5
+#| fig-height: 8
+#| out-width: 70%
+#| code-line-numbers: "3,4"
+tb_aus_idn |>
+    ggplot(aes(x=year, y=rel_count)) +
+      geom_point() +
+      geom_smooth(se=F, colour = "#E87700") +
+      xlab("") + ylab("Relative count") +
+      facet_wrap(~iso3, ncol=1) +
+      theme(aspect.ratio = 0.6)
+```
+
+:::
 :::
 
 :::
 ::::
 
-## Styling and theming {.center .center-align .transition-slide}
-
-## Styling
-
-:::: {.columns}
-::: {.column width=30%}
-
-The [BBC cookbook](https://bbc.github.io/rcookbook/) has good basic advice. The work of [Amanda Cox](https://gestalten.com/blogs/journal/visualizing-a-new-new-york-times) has been instrumental in the NY Times data visualisations.
-
-<br>
-Elements that are [important in plot design]{.darkpink2} are many.
-
-:::
-::: {.column width=5%}
-:::
-::: {.column width=65%}
-
-Remember:
-
-- The data should pop to be the pre-attentive element
-- Grids are important for lining up values with axis values 
-- Mapping of data should be appropriate 
-- Legends or callouts/annotations
-- Axis text: don't repeat yourself (e.g. "%" or "000, 000" at each tick mark)
-- Aspect ratio: square, short and wide, tall and skinny
-- Colour choices and application
-- Titles for journalism but captions for science
-- Small multiples
-- Scales allow for comparison
-- Layering order
-- Information is meaningful to the intended audience
-
-:::
-::::
-
-<!-- 
-## Example 1
+## Guided exercises
 
 :::: {.columns}
 ::: {.column width=20%}
 
 <br><br>
-How would you polish these plots?
+What is wrong with these plots, and how would you fix them?
 
 <br><br><br>
 ```{r}
@@ -298,10 +350,11 @@ How would you polish these plots?
 
 ## 1
 
+::: {.f70}
+
 ```{r}
-#| label: tb-data
-#| echo: false
-# Prep tb_tidy data again
+#| label: tb-tidy
+#| code-summary: process data
 tb <- read_csv("data/TB_notifications_2023-08-21.csv") |>
   filter(country == "Australia", year > 1996, year < 2013) |>
   select(year, contains("new_sp")) 
@@ -332,8 +385,8 @@ tb_tidy <- tb |>
 #| label: styling1
 #| fig-width: 7
 #| fig-height: 5
-#| out-width: 80%
-#| echo: false
+#| out-width: 70%
+#| code-summary: plotting code
 tb_tidy |> 
   filter(!(age %in% c("0-14", "unknown"))) |>
   ggplot(aes(x=year, 
@@ -348,15 +401,18 @@ tb_tidy |>
   theme(axis.text = element_text(size="10"),
         panel.grid.major = element_line(color="black")) 
 ```
+:::
 
 ## 2
+
+::: {.f70}
 
 ```{r}
 #| label: styling2
 #| fig-width: 7
 #| fig-height: 5
 #| out-width: 80%
-#| echo: false
+#| code-summary: plotting code
 tb_tidy |> 
   filter(!(age %in% c("0-14", "unknown"))) |>
   ggplot(aes(x=year, 
@@ -379,15 +435,18 @@ tb_tidy |>
            element_rect(fill="grey90", 
                         colour = "grey80")) 
 ```
+:::
 
 ## 3
+
+::: {.f70}
 
 ```{r}
 #| label: styling3
 #| fig-width: 7
 #| fig-height: 5
 #| out-width: 70%
-#| echo: false
+#| code-summary: plotting code
 gapminder |> 
   filter (year == 2007) |>
   ggplot(aes(x=lifeExp, 
@@ -397,15 +456,18 @@ gapminder |>
   geom_point() +
   scale_colour_discrete_divergingx(palette = "Zissou 1")
 ```
+:::
 
 ## 4
+
+::: {.f70}
 
 ```{r}
 #| label: styling4
 #| fig-width: 7
 #| fig-height: 5
 #| out-width: 80%
-#| echo: false
+#| code-summary: plotting code
 gapminder |> 
   filter (year == 2007) |>
   ggplot(aes(x=lifeExp, 
@@ -417,15 +479,18 @@ gapminder |>
                 labels = seq(0, 50, 10)) +
   theme(aspect.ratio = 0.5)
 ```
+:::
 
 ## 5
+
+::: {.f70}
 
 ```{r}
 #| label: styling5
 #| fig-width: 7
 #| fig-height: 5
 #| out-width: 80%
-#| echo: false
+#| code-summary: plotting code
 gapminder |> 
   filter (year == 2007) |>
   ggplot(aes(x=as.numeric(country),
@@ -438,17 +503,732 @@ gapminder |>
                 labels = seq(0, 50, 10)) +
   theme(aspect.ratio = 0.5)
 ```
+:::
 
 :::
 
 :::
 ::::
 
+
+## Styling and theming {.center .center-align .transition-slide}
+
+## Styling [1/7]{.f50} {.scrollable}
+
+:::: {.columns}
+::: {.column width=30%}
+
+The [BBC cookbook](https://bbc.github.io/rcookbook/) has good basic advice for **journalism and reports**. The work of [Amanda Cox](https://gestalten.com/blogs/journal/visualizing-a-new-new-york-times) has been instrumental in the NY Times data visualisations.
+
+The Royal Statistical Society provides a [Best Practices for Data Visualisation](https://royal-statistical-society.github.io/datavisguide/) with its own [RSSthemes](https://github.com/nrennie/RSSthemes) package for ggplot2, for **academic publications**.
+
+<br><br>
+
+::: {.f80}
+*The default ggplot2 theme `theme_grey()` is designed to give the data plot the same ink strength on the page as the surrounding text.*
+:::
+
+:::
+::: {.column width=5%}
+:::
+::: {.column width=65%}
+
+::: {.f50}
+Australia has maintained its status as a low-incidence tuberculosis (TB) country over the past decade, with notification rates that have remained relatively stable despite global fluctuations in TB burden. The country's TB epidemiology presents a unique profile characterized by consistent low domestic transmission and a disease burden heavily concentrated among overseas-born populations.
+
+Australia reports approximately 1300 cases of TB per year and has a TB case notification rate of 5.5 cases per 100,000 population, though recent data suggests this rate has shown slight variations. Incidence of tuberculosis (per 100,000 people) in Australia was reported at 6.2 in 2023, indicating a modest increase from historical averages. In 2015 this was 5.3 per 100,000 population per year, corresponding to 1,244 individual notifications, demonstrating the relatively stable nature of TB incidence in the country.
+The consistency of these figures over the decade reflects Australia's effective TB control measures and robust public health surveillance systems. This rate has essentially remained unchanged since the mid-1980s, however a slight increase in rates has been observed since 2003, suggesting a gradual but measurable trend that health authorities continue to monitor closely.
+
+```{r}
+#| label: page-of=text
+#| fig-width: 6
+#| fig-height: 3
+#| out-width: 60%
+#| echo: false
+#| fig-cap: "Fig 1. TB incidence in Australia  1980-2021. Initially incidence dropped but it has been steadily climbing in the recent two decades. Note that, counts are not population adjusted."
+tb_aus <- read_csv("data/TB_notifications_2023-08-21.csv") |>
+  filter(iso3 == "AUS") |> 
+  select(year, c_newinc) 
+
+tb_aus_p <- tb_aus |>
+    ggplot(aes(x=year, y=c_newinc)) +
+      geom_point(colour="grey40", ) +
+      geom_smooth(colour="black", 
+                  se=FALSE, 
+                  alpha=0.8,
+                  span = 0.4) +
+  xlab("year") + 
+  scale_y_continuous("count ('000)", 
+    breaks = seq(1000, 1600, 200), 
+    labels=c("1.0", "1.2", "1.4", "1.6")) 
+  
+tb_aus_p + theme_grey() +
+  theme(aspect.ratio = 0.5)
+```
+
+
+A defining characteristic of Australia's TB epidemiology is the overwhelming concentration of cases among overseas-born populations. Between 88% to 95% of TB cases in Australia have been reported in the overseas-born population, highlighting the critical role of migration patterns in shaping the country's TB landscape. This demographic distribution has remained consistent throughout the past decade and represents one of the most significant epidemiological features of TB in Australia.
+The Australian-born population experiences markedly lower TB rates, with specific risk factors identified in vulnerable groups. Research from Victoria reveals that the most common risk factor in the 0–14 year age group was a household contact with tuberculosis (85.1%), followed by having a parent from a high tuberculosis incidence country (70.2%). These findings underscore the importance of contact tracing and screening programs, particularly for children in households with overseas-born parents from high-burden countries.
+
+<!-- 
+
+Australia's TB control strategy relies heavily on comprehensive surveillance and case management systems. Case and contact management is conducted by the Victorian Tuberculosis Program, under the auspices of the Victorian Department of Health and Human Services, representing the coordinated approach taken across Australian jurisdictions. This systematic approach to TB control has been instrumental in maintaining low incidence rates despite ongoing migration from high-burden countries.
+The surveillance data consistently shows that migration is a key driver of tuberculosis (TB) in many low-incidence settings, with the majority of TB cases attributed to reactivation of latent TB (LTBI) acquired overseas. This understanding has informed screening and prevention strategies, with increased focus on detecting and managing latent TB infections among recent migrants from high-incidence countries.
+
+Despite Australia's success in maintaining low TB incidence, several challenges persist. The continued importation of TB through migration requires ongoing vigilance and resource allocation for screening programs. Additionally, the slight upward trend observed since 2003 warrants careful monitoring to ensure that effective control measures remain in place.
+The COVID-19 pandemic's impact on TB services and case detection globally has highlighted the importance of maintaining robust surveillance systems. While Australia's TB incidence has remained relatively stable, the broader global context of increasing TB notifications worldwide requires continued attention to prevent any deterioration in Australia's favorable TB epidemiology.
+Looking forward, Australia's TB control strategy will need to balance the dual challenges of managing imported TB cases while maintaining the infrastructure necessary to detect and treat the small number of domestically acquired cases. The country's success over the past decade provides a strong foundation for continued progress toward TB elimination goals.
 -->
 
-## Is the pattern visible and real {.center .center-align .transition-slide}
+:::
+
+:::
+::::
+
+## Overall themes [2/7]{.f50} 
+
+:::: {.columns}
+::: {.column width=30%}
+The [ggthemes](https://r-graph-gallery.com/package/ggthemes.html) package supplements the handful available in [ggplot2](https://ggplot2.tidyverse.org/reference/ggtheme.html).
+
+These are convenient definitions of the array of style choices for a data plot that include background, position and sizing of title and axis text, legend position and arrangement, axes, ticks and grid lines, extra space at plot edges, ...
+
+:::
+::: {.column width=70%}
+
+::: {.f70}
+
+```{r}
+#| fig-width: 8
+#| fig-height: 6
+#| out-width: 80%
+library(patchwork)
+p1 <- tb_aus_p + theme_grey() +
+  theme(aspect.ratio = 0.5) + ggtitle("default")
+p2 <- tb_aus_p + theme_minimal() +
+  theme(aspect.ratio = 0.5) + ggtitle("minimal")
+p3 <- tb_aus_p + theme_tufte() +
+  theme(aspect.ratio = 0.5) + ggtitle("tufte")
+p4 <- tb_aus_p + theme_economist() +
+  theme(aspect.ratio = 0.5) + ggtitle("economist")
+p1 + p2 + p3 + p4 + plot_layout(ncol=2)
+```
+
+:::
+:::
+
+::::
+
+## Setting theme elements [3/7]{.f50} 
+
+:::: {.columns}
+::: {.column width=50%}
+A theme for all plots was specified for these two slide decks.
+
+```{r}
+#| label: theme-for-nice-plots
+#| code-fold: false
+#| eval: false
+```
+
+:::
+::: {.column width=5%}
+:::
+::: {.column width=45%}
+
+::: {.fragment}
+
+Basic theme: `theme_gdocs()`
+
+- Text size adjusted
+- Background set
+- Axes lines adjusted
+- Grid lines colour changed
+- Title position changed
+
+:::
+
+:::
+::::
+
+## Colour palettes [4/7]{.f50} 
+
+:::: {.columns}
+::: {.column}
+
+The [colorspace](https://colorspace.r-forge.r-project.org/articles/colorspace.html) package has the most comprehensive set of palettes and tools for assessing, or creating new palettes. 
+
+If you have mapped the variables correctly, changing the colours only requires using the assignment of a new palette.
+
+:::
+::: {.column}
+
+::: {.panel-tabset}
+
+## Default
+
+::: {.f70}
+
+```{r}
+#| fig-width: 7
+#| fig-height: 5
+tb_age <- tb_tidy |> 
+  filter(!(age %in% c("0-14", "unknown"))) |>
+  ggplot(aes(x = year, 
+             y = count, 
+             colour = age)) +
+  geom_point() +
+  geom_smooth(se=F) +
+  facet_wrap(~sex, ncol = 2) +
+  scale_x_continuous("year", 
+    breaks = seq(1998, 2012, 2), 
+    labels = c("98", "00", "02", "04", "06", "08", "10", "12")) +
+  theme(axis.text = element_text(size="10")) 
+tb_age  
+```
+
+:::
+
+## 1
+
+::: {.f70}
+
+```{r}
+#| fig-width: 7
+#| fig-height: 5
+tb_age +
+  scale_color_discrete_divergingx(palette="Zissou 1") 
+```
+
+:::
+
+## 2
+
+::: {.f70}
+
+```{r}
+#| fig-width: 7
+#| fig-height: 5
+tb_age +
+  scale_color_discrete_divergingx(palette="Geyser") 
+```
+:::
+
+## 3
+
+::: {.f70}
+
+```{r}
+#| fig-width: 7
+#| fig-height: 5
+tb_age +
+  scale_color_discrete_sequential(palette="OrYel") 
+```
+:::
+
+:::
+
+:::
+::::
+
+## Colorblind proofing [5/7]{.f50} 
+
+:::: {.columns}
+::: {.column}
+
+The [colorspace](https://colorspace.r-forge.r-project.org/articles/colorspace.html) package has several functions `deutan()`, `protan()`, `tritan()` which simulates color vision deficiencies.
+
+You need to create the changed colour palette outside the plotting code, and then apply it manually. 
+
+Also the package `dichromat` has tools to simulate color deficiencies.
+
+:::
+::: {.column}
+
+::: {.panel-tabset}
+
+## Default
+
+::: {.f70}
+
+```{r}
+#| fig-width: 7
+#| fig-height: 5
+clrs <- deutan(scales::hue_pal()(6))
+tb_age + scale_colour_manual("", values = clrs)
+```
+
+:::
+
+## 1
+
+::: {.f70}
+
+```{r}
+#| fig-width: 7
+#| fig-height: 5
+clrs <- deutan(divergingx_hcl(6, "Zissou 1"))
+tb_age +
+  scale_colour_manual("", values = clrs)
+```
+
+:::
+
+## 2
+
+::: {.f70}
+
+```{r}
+#| fig-width: 7
+#| fig-height: 5
+clrs <- deutan(divergingx_hcl(6, "Geyser"))
+tb_age +
+  scale_colour_manual("", values = clrs)
+```
+:::
+
+## 3
+
+::: {.f70}
+
+```{r}
+#| fig-width: 7
+#| fig-height: 5
+clrs <- deutan(sequential_hcl(6, "OrYel"))
+tb_age +
+  scale_colour_manual("", values = clrs)
+```
+:::
+
+:::
+
+:::
+::::
+
+## Creating ensemble of plots [6/7]{.f50} 
+
+:::: {.columns}
+::: {.column width=30%}
+
+One plot is often not enough, for a report or an academic publication.
+
+Creating and arranging is an art.
+
+The packages [patchwork](https://patchwork.data-imaginist.com/articles/guides/layout.html) and [cowplot](https://cran.r-project.org/web/packages/cowplot/vignettes/introduction.html) can help with layout.
+
+For the tuberculosis data, suppose we want one overview plot, and then separate displays showing sex and age effects.
+
+:::
+::: {.column width=70%}
+
+::: {.f70}
+
+```{r}
+#| fig-width: 13
+#| fig-height: 8
+#| out-width: 100%
+ov <- tb_tidy |>
+  group_by(year) |>
+  summarise(count = sum(count)) |>
+  ggplot(aes(x=year, y=count)) +
+    geom_col() +
+    annotate("text", x=1996, y=320, label="A", size=8) +
+    xlim(c(1996, 2013))
+sex <- tb_tidy |>
+  group_by(year, sex) |>
+  summarise(count = sum(count)) |>
+  ggplot(aes(x=year, weight=count, fill=sex)) +
+    geom_bar(position="fill") +
+    scale_fill_discrete_divergingx(palette = "TealRose",
+      rev=TRUE) +
+    ylab("proportion") +
+    annotate("text", x=1996, y=0.95, label="B", size=8) +
+    xlim(c(1996, 2013))
+age <- tb_tidy |>
+  group_by(year, age) |>
+  summarise(count = sum(count)) |>
+  ggplot(aes(x=year, weight=count, fill=age)) +
+    geom_bar(position="fill") +
+    scale_fill_discrete_sequential(palette = "Sunset") +
+    ylab("proportion") +
+    annotate("text", x=1996, y=0.95, label="C", size=8) +
+    xlim(c(1996, 2013))
+
+ov + sex/age + plot_layout(widths=c(2,1))
+```
+:::
+
+:::
+::::
+
+## Saving the plot [7/7]{.f50} 
+
+:::: {.columns}
+::: {.column width=50%}
+::: {.f80}
+The output format dramatically affects what can be done with the plot. The primary formats for publications are:
+
+- `pdf`
+    - Academic articles typically should use `pdf` figures, which is mixed format, but typically high-resolution that can be accurately resized. 
+    - Files can be large if there are many observations and hence many points. 
+    - Doesn't display in `html` documents, like slides or websites natively.
+- `svg`: scalable vector graphics, maintains full resolution and all elements, but there is less support for this format in many applications.
+- `png`, `jpg`
+    - Articles in MS Office, because they don't handle other formats!
+    - Higher resolution can be obtained by setting size or `dpi`.
+    
+:::    
+:::
+::: {.column width=20%}
+
+See [ggplot2 book on saving plots](https://ggplot2-book.org/themes.html#sec-saving) for more details on using `ggsave()`.
+
+
+:::
+::: {.column width=30%}
+
+::: {.f70}
+
+```{r}
+#| eval: false
+set.seed(1130)
+d <- tibble(x = runif(10000, -1, 1),
+            y = x + x^2 + rnorm(10000))
+p <- ggplot(d, aes(x=x, y=y)) +
+  geom_point(alpha=0.3) +
+  geom_smooth(colour="#006dae", se=F, linewidth=2)
+ggsave("images/test.pdf", p, width=1000, height=800, units="px")
+ggsave("images/test.png", p, width=1000, height=800, units="px")
+ggsave("images/test-low.png", p, width=250, height=200, units="px", dpi=75)
+```
+
+
+PDF (no show in slides)
+
+![](images/test.pdf)
+
+PNG - high
+
+![](images/test.png){width=400}
+
+
+PNG - low
+
+![](images/test-low.png){width=400}
+
+:::
+
+:::
+::::
+
+## Is the pattern visible and real? {.center .center-align .transition-slide}
+
+## Checking for patterns [1/2]{.f50}
+
+:::: {.columns}
+::: {.column width=20%}
+
+Should you report a pattern, when it is not really there?
+
+<br><br>
+
+Check for spurious patterns by making comparison plots, where you know that there is is no relationship.
+
+:::
+::: {.column width=80%}
+
+```{r}
+#| echo: false
+library(tsibble)
+library(naniar)
+library(lubridate)
+library(imputeTS)
+library(purrr)
+traralgon_data <- read_csv("data/traralgon_data.csv")
+alphington_data <- read_csv("data/alphington_data.csv")
+weather_data <- read_csv("data/weather_data.csv")
+
+pollutant_data <- bind_rows(traralgon_data,alphington_data)
+pollutant_data <- pollutant_data |>
+  mutate(date_utc = round_date(date_utc, unit = "day")) |>
+  group_by(location_id, location, parameter, date_utc, unit, lat, long, country) |>  
+  summarise(value = mean(value, na.rm = TRUE), .groups = 'drop') 
+
+pollutant_weather_data <- pollutant_data |> 
+     mutate(date = as.Date(date_utc))|> 
+     select(location, parameter, date, value) |> 
+     #pivot_wider(names_from = parameter, values_from = value) |>
+     left_join(weather_data |> 
+     select(longitude, latitude, date, air_tmax,
+            air_tmin, mslp, radiation, rainfall,
+            location), by = c("location","date"))  |> 
+                              ungroup()
+
+pollutant_weather_data <- pollutant_weather_data |>
+  as_tsibble(key = c("location","parameter"),
+             index = "date")
+
+gap_cnt <- pollutant_weather_data |> count_gaps()
+
+pollutant_weather_data <- fill_gaps(pollutant_weather_data,
+                                    .full=TRUE) 
+
+gap_cnt_with_filter <- gap_cnt |> 
+                            filter(.n > 2) |> 
+                            bind_rows( #custom count, since the gap starts from the starting date of the data
+                              tibble(
+                                location = "Traralgon",
+                                parameter = "so2",
+                                .from = as_date("2022-04-01"),
+                                .to = as_date("2022-04-20"),
+                                .n = as.integer(20)  
+                              )
+                            )
+
+is_excluded <- function(location, parameter, date) {
+  any(gap_cnt_with_filter$location == location & 
+      gap_cnt_with_filter$parameter == parameter & 
+      date >= gap_cnt_with_filter$.from & 
+      date <= gap_cnt_with_filter$.to)
+}
+pollutant_weather_data <- pollutant_weather_data |>
+  mutate(exclude = pmap_lgl(list(location, parameter, date), is_excluded))
+
+interpolate_vectorized <- function(column, exclude_condition) {
+  if (sum(!is.na(column)) < 2) {
+    column  # Return original if insufficient data for interpolation
+  } else {
+    column[!exclude_condition] <- na_interpolation(column[!exclude_condition])
+    column
+  }
+}
+
+pollutant_weather_data_cleaned <- pollutant_weather_data |>
+  mutate(across(
+    c(value:rainfall), ~ interpolate_vectorized(.x, exclude)
+  )) |>
+  select(-exclude)
+
+pollutant_weather_data_cleaned <- pollutant_weather_data_cleaned |> 
+  as_tibble() |> 
+  pivot_wider(
+    id_cols = c(location, date, longitude, latitude, air_tmax, air_tmin, mslp, radiation, rainfall),
+    names_from = parameter,
+    values_from = value
+  )
+
+poll_wea_for_o3 <- pollutant_weather_data_cleaned |> 
+                    select(location, date, air_tmax, air_tmin, o3)
+
+
+w1 <- poll_wea_for_o3 |> 
+  ggplot(aes(x = air_tmin, 
+             y = o3)) + 
+    geom_point() + 
+    geom_smooth(se = F) 
+
+l1 <- ggplot(lineup(null_permute('air_tmin'), poll_wea_for_o3, n=12), 
+       aes(air_tmin,o3)) +
+  geom_point() +
+  geom_smooth(se = F) +
+  facet_wrap(~ .sample, ncol=4) +
+  theme(axis.text = element_blank()) +
+  xlab("") + ylab("")
+
+w2 <- poll_wea_for_o3 |> 
+  ggplot(aes(x = air_tmax, 
+             y = o3)) + 
+    geom_point() +
+    geom_smooth(se = F) 
+
+l2 <- ggplot(lineup(null_permute('air_tmax'), poll_wea_for_o3, n=12), 
+       aes(air_tmax,o3)) +
+  geom_point() +
+  geom_smooth(se = F) +
+  facet_wrap(~ .sample, ncol=4) +
+  theme(axis.text = element_blank()) +
+  xlab("") + ylab("")
+```
+
+::: {.panel-tabset}
+
+## Which is different?
+
+```{r}
+#| echo: false
+#| fig-width: 9
+#| fig-height: 7
+#| out-width: 80%
+l1
+```
+
+## Actual plot
+
+```{r}
+#| echo: false
+#| fig-width: 4
+#| fig-height: 3
+#| out-width: 50%
+w1
+```
+
+Comparisons made by randomising the values of `air_tmax`.
+
+:::
+
+:::
+::::
+
+## Checking for patterns [2/2]{.f50}
+
+:::: {.columns}
+::: {.column width=20%}
+
+Should you report a pattern, when it is not really there?
+
+<br><br>
+
+**Check for spurious patterns by making comparison plots**, where you know that there is is no relationship.
+
+:::
+::: {.column width=80%}
+
+::: {.panel-tabset}
+
+## Which is different?
+
+```{r}
+#| echo: false
+#| fig-width: 9
+#| fig-height: 7
+#| out-width: 80%
+l2
+```
+
+## Actual plot
+
+```{r}
+#| echo: false
+#| fig-width: 4
+#| fig-height: 3
+#| out-width: 50%
+w2
+```
+
+Comparisons made by **randomising** the values of `air_tmin`.
+
+:::
+
+:::
+::::
+
+## Better design
+
+:::: {.columns}
+::: {.column width=20%}
+
+The same procedure can be used to compare different plot designs. 
+
+If the real plot is **detected faster and more often** amongst a page of decoys, using one design in comparison to another, then that design is better.
+
+:::
+::: {.column width=80%}
+
+::: {.panel-tabset}
+
+## Which is different?
+
+## Design 1
+
+```{r}
+#| echo: false
+#| fig-width: 9
+#| fig-height: 7
+#| out-width: 80%
+g07 <- gapminder |> 
+  filter(year == 2007) 
+set.seed(414)
+ggplot(lineup(null_permute("lifeExp"), g07, n=12)) +
+  geom_point(aes(x=lifeExp, 
+                 y=gdpPercap), colour = "#3B99B1") +
+  #scale_y_log10("gdpPercap ('000)",
+  #              breaks = seq(0, 50000, 10000), 
+  #              labels = seq(0, 50, 10)) +
+  facet_wrap(~.sample, ncol=4) +
+  theme(axis.text = element_blank()) +
+  xlab("") + ylab("")
+```
+
+## Design 2
+
+```{r}
+#| echo: false
+#| fig-width: 9
+#| fig-height: 7
+#| out-width: 80%
+set.seed(514)
+ggplot(lineup(null_permute("lifeExp"), g07, n=12)) +
+  geom_col(aes(x=as.numeric(country),
+             y=gdpPercap,
+             fill=lifeExp)) + 
+  xlab("country") +
+  scale_fill_distiller(palette = "RdPu", trans="log10") +    
+  scale_y_log10("",
+                breaks = seq(0, 50000, 10000), 
+                labels = seq(0, 50, 10)) +
+  facet_wrap(~.sample, ncol=4) +
+  theme(axis.text = element_blank(),
+        legend.position = "none") +
+  xlab("") + ylab("")
+```
+
+
+:::
+
+:::
+::::
 
 ## Making your own plot better {.center .center-align .transition-slide}
+
+## Let's take the plunge!
+
+1. Share a plot that you have, that you'd like to improve
+2. Brainstorm the elements: variables, message
+3. Map out the aspects that might be improved
+4. Start making improvements one by one
+
+We have a breakout room, for attendees online, for
+
+- one-on-one help with an instructor
+- or working together with other attendees
+
+## Cheerio 👋🏼 
+
+:::: {.columns}
+::: {.column width="45%"}
+
+Thanks for joining to learn about making data plots today. 
+
+<br><br>
+These are the resources that we have used today, that might be useful for you in the future.
+
+
+:::
+::: {.column width="5%"}
+:::
+::: {.column width="50%"}
+
+- [tidy data](https://r4ds.had.co.nz/tidy-data.html)
+- [wrangling data](https://r4ds.had.co.nz/wrangle-intro.html)
+- [grammar of graphics](https://ggplot2-book.org)
+- [cognitive perception](https://homepage.divms.uiowa.edu/~luke/classes/STAT4580/percep.html)
+- styling: [BBC cookbook](https://bbc.github.io/rcookbook/), [RSSthemes](https://github.com/nrennie/RSSthemes)
+- [color](https://colorspace.r-forge.r-project.org/index.html)
+- [arranging plots](https://patchwork.data-imaginist.com/articles/guides/layout.html)
+- [checking patterns](http://dicook.github.io/nullabor/)
+
+:::
+::::
 
 ## End of session 2 {.center}
 
