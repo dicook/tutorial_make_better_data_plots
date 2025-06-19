@@ -45,9 +45,9 @@ statistics course.
 |15 | **Is the pattern visible and real?** | Check what you are trying to communicate, using statistical thinking |
 |30 |	**Making your own plot better** | Your turn to have a guided practice at improving a plot from your own work |
 
-[Session 1 Slides (COMING)]()
+[Session 1 Slides](https://dicook.github.io/tutorial_make_better_data_plots/slides1.html)
 
-[Session 2 Slides (COMING)]()
+[Session 2 Slides](https://dicook.github.io/tutorial_make_better_data_plots/slides2.html)
 
 [Zip file of materials (COMING)]()
 
@@ -77,7 +77,7 @@ install.packages(c("ggplot2",
 
 2. Download the [Zip file of materials (COMING)]() to your laptop, and unzip it. 
 
-3. Download just the R scripts,  (COMING)
+3. Download just the R scripts: [Session 1](https://dicook.github.io/tutorial_make_better_data_plots/slides1.R) [Session 2](https://dicook.github.io/tutorial_make_better_data_plots/slides2.R)
 
 4. Open your RStudio be clicking on `tutorial.Rproj`. 
 
