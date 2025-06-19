@@ -49,7 +49,7 @@ statistics course.
 
 [Session 2 Slides](https://dicook.github.io/tutorial_make_better_data_plots/slides2.html)
 
-[Zip file of materials (COMING)]()
+[Zip file of materials]((https://dicook.github.io/tutorial_make_better_data_plots/tutorial.zip))
 
 ## Getting started
 
@@ -75,7 +75,7 @@ install.packages(c("ggplot2",
                    dependencies=c("Depends", "Imports"))
 ```
 
-2. Download the [Zip file of materials (COMING)]() to your laptop, and unzip it. 
+2. Download the [Zip file of materials](https://dicook.github.io/tutorial_make_better_data_plots/tutorial.zip) to your laptop, and unzip it. 
 
 3. Download just the R scripts: [Session 1](https://dicook.github.io/tutorial_make_better_data_plots/slides1.R) [Session 2](https://dicook.github.io/tutorial_make_better_data_plots/slides2.R)
 
